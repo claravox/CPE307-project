@@ -1,3 +1,6 @@
-# CPE307-project
+# CSC307-project
 
-Kitty Zhuang
+- Kitty Zhuang
+- Claire S
+- Ethan Goldfarb
+- Adam Perlin

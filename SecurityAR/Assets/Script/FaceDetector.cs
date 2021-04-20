@@ -13,7 +13,7 @@ public class FaceDetector : MonoBehaviour
     {
         WebCamDevice[] devices = WebCamTexture.devices;
 
-        _webCamTexture = new WebCamTexture(devices[0].name);
+        _webCamTexture = new WebCamTexture(devices[0].name, 1920, 1080, 60);
         _webCamTexture.Play();
         cascade = new CascadeClassifier(Application.dataPath + @"/OpenCV+Unity/Demo/Face_Detector/haarcascade_frontalface_default.xml");
     }

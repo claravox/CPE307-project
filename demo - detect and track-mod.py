@@ -66,7 +66,8 @@ def detectAndTrackLargestFace():
                 kernel_width = (w // 7) | 1
                 kernel_height = (h // 7) | 1
                 # preprocess the image: resize and performs mean subtraction
-                blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300), (104.0, 117.0, 123.0))
+                # Could replace 177 with 117, apparently there's some controversy on this
+                blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300), (104.0, 177.0, 123.0))
                 # set the image into the input of the neural network
                 model.setInput(blob)
                 # perform inference and get the result
@@ -94,13 +95,14 @@ def detectAndTrackLargestFace():
                         trackingFace = 1
 
                         bbox = (start_x, start_y, end_x, end_y)
+                        tracker = cv2.TrackerKCF_create()
                         ok = tracker.init(frame, bbox)
 
 
 
             #Check if the tracker is actively tracking a region in the image
             elif trackingFace:
-
+                print(tracker)
                 #Update the tracker and request information about the
                 #quality of the tracking update
                 ok, bbox = tracker.update(frame)
@@ -110,9 +112,8 @@ def detectAndTrackLargestFace():
                 #rectangle
                 if ok:
                     # Tracking success
-                    p1 = (int(bbox[0]), int(bbox[1]))
-                    p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
-                    cv2.rectangle(frame, p1, p2, (255,0,0), 2)
+                    x, y, w, h = bbox
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), (255,0,0), 2)
 
                 else:
                     #If the quality of the tracking update is not

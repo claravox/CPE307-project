@@ -42,6 +42,9 @@ def detectAndTrackLargestFace():
     #The color of the rectangle we draw around the face
     rectangleColor = (0,165,255)
 
+    frame_num = 0
+    frame_reset_thresh = 120
+
     try:
         while True:
             #Retrieve the latest image from the webcam
@@ -65,7 +68,7 @@ def detectAndTrackLargestFace():
 
 
             #If we are not tracking a face, then try to detect one
-            if not trackingFace:
+            if not trackingFace or frame_num > frame_reset_thresh:
                 
                 # preprocess the image: resize and performs mean subtraction
                 # Could replace 177 with 117, apparently there's some controversy on this
@@ -81,7 +84,7 @@ def detectAndTrackLargestFace():
                     # get the confidence
                     # if confidence is above 40%, then blur the bounding box (face)
                     if confidence > 0.4:
-                        # get the surrounding box cordinates and upscale them to original image
+                        # get the surrounding box coordinates and upscale them to original image
                         box = output[i, 3:7] * np.array([w, h, w, h])
                         # convert to integers
                         start_x, start_y, end_x, end_y = box.astype(int)
@@ -102,7 +105,7 @@ def detectAndTrackLargestFace():
 
 
             #Check if the tracker is actively tracking a region in the image
-            elif trackingFace:
+            if trackingFace:
                 #Update the tracker and request information about the
                 #quality of the tracking update
                 ok, bbox = tracker.update(frame)
@@ -134,6 +137,8 @@ def detectAndTrackLargestFace():
 
             #Finally, we want to show the images on the screen
             cv2.imshow("Frame", frame)
+
+            frame_num += 1
 
 
 

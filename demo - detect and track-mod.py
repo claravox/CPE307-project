@@ -96,13 +96,12 @@ def detectAndTrackLargestFace():
 
                         bbox = (start_x, start_y, end_x, end_y)
                         tracker = cv2.TrackerKCF_create()
-                        ok = tracker.init(frame, bbox)
+                        ok = tracker.init(frame, (start_x, start_y, end_x - start_x, end_y - start_y))
 
 
 
             #Check if the tracker is actively tracking a region in the image
             elif trackingFace:
-                print(tracker)
                 #Update the tracker and request information about the
                 #quality of the tracking update
                 ok, bbox = tracker.update(frame)
@@ -113,7 +112,7 @@ def detectAndTrackLargestFace():
                 if ok:
                     # Tracking success
                     x, y, w, h = bbox
-                    cv2.rectangle(frame, (x, y), (w, h), (255,0,0), 2)
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (255,0,0), 2)
 
                 else:
                     #If the quality of the tracking update is not

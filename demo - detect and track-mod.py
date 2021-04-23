@@ -58,13 +58,15 @@ def detectAndTrackLargestFace():
                 cv2.destroyAllWindows()
                 exit(0)
 
+            # get width and height of the image
+            h, w = frame.shape[:2]
+            kernel_width = (w // 7) | 1
+            kernel_height = (h // 7) | 1
+
 
             #If we are not tracking a face, then try to detect one
             if not trackingFace:
-                # get width and height of the image
-                h, w = frame.shape[:2]
-                kernel_width = (w // 7) | 1
-                kernel_height = (h // 7) | 1
+                
                 # preprocess the image: resize and performs mean subtraction
                 # Could replace 177 with 117, apparently there's some controversy on this
                 blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300), (104.0, 177.0, 123.0))
@@ -94,7 +96,6 @@ def detectAndTrackLargestFace():
                         # tracker is tracking a region in the image
                         trackingFace = 1
 
-                        bbox = (start_x, start_y, end_x, end_y)
                         tracker = cv2.TrackerKCF_create()
                         ok = tracker.init(frame, (start_x, start_y, end_x - start_x, end_y - start_y))
 
@@ -106,13 +107,20 @@ def detectAndTrackLargestFace():
                 #quality of the tracking update
                 ok, bbox = tracker.update(frame)
 
-                #If the tracking quality is good enough, determine the
-                #updated position of the tracked region and draw the
-                #rectangle
+                # If the tracking quality is good enough, determine the
+                # updated position of the tracked region and blur the face!
                 if ok:
                     # Tracking success
                     x, y, w, h = bbox
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (255,0,0), 2)
+                    start_x, start_y, end_x, end_y = x, y, x + w, y + h
+                    # get the face image
+                    face = frame[start_y: end_y, start_x: end_x]
+                    # apply gaussian blur to this face
+                    face = cv2.GaussianBlur(face, (kernel_width, kernel_height), 0)
+                    # put the blurred face into the original image
+                    frame[start_y: end_y, start_x: end_x] = face
+
+                    #cv2.rectangle(frame, (x, y), (x + w, y + h), (255,0,0), 2)
 
                 else:
                     #If the quality of the tracking update is not

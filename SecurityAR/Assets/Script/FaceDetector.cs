@@ -7,11 +7,12 @@ public class FaceDetector : MonoBehaviour
 {
     WebCamTexture _webCamTexture;
     CascadeClassifier cascade;
+    
     OpenCvSharp.Rect MyFace;
 
     // Start is called before the first frame update
     void Start()
-    {
+    {  
         WebCamDevice[] devices = WebCamTexture.devices;
 
         _webCamTexture = new WebCamTexture(devices[0].name, 1920, 1080, 60);
@@ -19,14 +20,19 @@ public class FaceDetector : MonoBehaviour
         cascade = new CascadeClassifier(Application.dataPath + @"/OpenCV+Unity/Demo/Face_Detector/haarcascade_frontalface_default.xml");
     }
 
-    private Size kernelDimensions(int width) => new Size( (width / 7) | 1, (width / 7) | 1);
-    
+    private Size kernelDimensions(int width, int height) => new Size( (width / 7) | 1, (height / 7) | 1);
+
+    const int FrameResetThreshold = 120;
+    bool trackingFace;
 
     // Update is called once per frame
     void Update()
     {
         GetComponent<Renderer>().material.mainTexture = _webCamTexture;
         Mat frame = OpenCvSharp.Unity.TextureToMat(_webCamTexture);
+
+        int width = frame.Width;
+        int height = frame.Height;
 
         OpenCvSharp.Rect? maybeFaceLoc = findNewface(frame);
         if (!maybeFaceLoc.HasValue)
@@ -84,7 +90,7 @@ public class FaceDetector : MonoBehaviour
     {
         InputArray src = new InputArray(boundedFace);
         OutputArray dst = new OutputArray(boundedFace);
-        Cv2.GaussianBlur(src, dst, kernelDimensions(boundedFace.Width), 0);
+        Cv2.GaussianBlur(src, dst, kernelDimensions(boundedFace.Width, boundedFace.Height), 0);
 
        return dst.GetMat();
     }

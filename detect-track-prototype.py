@@ -11,21 +11,22 @@ import time
 
 
 # https://raw.githubusercontent.com/opencv/opencv/master/samples/dnn/face_detector/deploy.prototxt
-prototxt_path = "weights/deploy.prototxt.txt"
+#prototxt_path = "weights/deploy.prototxt.txt"
 # https://raw.githubusercontent.com/opencv/opencv_3rdparty/dnn_samples_face_detector_20180205_fp16/res10_300x300_ssd_iter_140000_fp16.caffemodel 
-model_path = "weights/res10_300x300_ssd_iter_140000_fp16.caffemodel"
+#model_path = "weights/res10_300x300_ssd_iter_140000_fp16.caffemodel"
 
 
 #Initialize a face cascade using the frontal face haar cascade provided with
 #the OpenCV library
-#faceCascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-
+faceCascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+sideCascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_profileface.xml')
 #The deisred output width and height
-OUTPUT_SIZE_WIDTH = 775
-OUTPUT_SIZE_HEIGHT = 600
+# Commenting, don't seem to be using?
+#OUTPUT_SIZE_WIDTH = 775
+#OUTPUT_SIZE_HEIGHT = 600
 
 # load Caffe model
-model = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
+#model = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
 
 def detectAndTrackLargestFace():
     #Open the first webcame device
@@ -70,38 +71,70 @@ def detectAndTrackLargestFace():
             #If we are not tracking a face, then try to detect one
             if not trackingFace or frame_num > frame_reset_thresh:
                 
-                # preprocess the image: resize and performs mean subtraction
-                # Could replace 177 with 117, apparently there's some controversy on this
-                blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300), (104.0, 177.0, 123.0))
-                # set the image into the input of the neural network
-                model.setInput(blob)
-                # perform inference and get the result
-                output = np.squeeze(model.forward())
+                #For the face detection, we need to make use of a gray
+                #colored image so we will convert the baseImage to a
+                #gray-based image
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                #Now use the haar cascade detector to find all faces
+                #in the image
+                faces = faceCascade.detectMultiScale(gray, 1.3, 5)
+                side_faces = sideCascade.detectMultiScale(gray, 1.3, 1)
+
+                maxArea = 0
+                x = 0
+                y = 0
+                w = 0
+                h = 0
+
+                for (_x,_y,_w,_h) in side_faces:
+                    if  _w*_h > maxArea:
+                        x = int(_x)
+                        y = int(_y)
+                        w = int(_w)
+                        h = int(_h)
+                        maxArea = w*h
+
+                #If one or more faces are found, initialize the tracker
+                #on the largest face in the picture
+                if maxArea > 0:
+                    # Let's just show what the side face found
+                    cv2.rectangle(frame, (x, y), (x + w , y + h),
+                                                rectangleColor ,2)
 
 
-                for i in range(0, output.shape[0]):
-                    confidence = output[i, 2]
-                    # get the confidence
-                    # if confidence is above 40%, then blur the bounding box (face)
-                    if confidence > 0.4:
-                        # get the surrounding box coordinates and upscale them to original image
-                        box = output[i, 3:7] * np.array([w, h, w, h])
-                        # convert to integers
-                        start_x, start_y, end_x, end_y = box.astype(int)
-                        # get the face image
-                        face = frame[start_y: end_y, start_x: end_x]
-                        # apply gaussian blur to this face
-                        face = cv2.GaussianBlur(face, (kernel_width, kernel_height), 0)
-                        # put the blurred face into the original image
-                        frame[start_y: end_y, start_x: end_x] = face
+                #For now, we are only interested in the 'largest'
+                #face, and we determine this based on the largest
+                #area of the found rectangle. First initialize the
+                #required variables to 0
+                maxArea = 0
+                x = 0
+                y = 0
+                w = 0
+                h = 0
 
-                        # Set the indicator variable such that we know the
-                        # tracker is tracking a region in the image
-                        trackingFace = 1
 
-                        tracker = cv2.TrackerKCF_create()
-                        ok = tracker.init(frame, (start_x, start_y, end_x - start_x, end_y - start_y))
+                #Loop over all faces and check if the area for this
+                #face is the largest so far
+                #We need to convert it to int here because of the
+                #requirement of the dlib tracker. If we omit the cast to
+                #int here, you will get cast errors since the detector
+                #returns numpy.int32 and the tracker requires an int
+                for (_x,_y,_w,_h) in faces:
+                    if  _w*_h > maxArea:
+                        x = int(_x)
+                        y = int(_y)
+                        w = int(_w)
+                        h = int(_h)
+                        maxArea = w*h
 
+                #If one or more faces are found, initialize the tracker
+                #on the largest face in the picture
+                if maxArea > 0 :
+                    tracker = cv2.TrackerKCF_create()
+                    ok = tracker.init(frame, (x, y, w, h))
+                    #Set the indicator variable such that we know the
+                    #tracker is tracking a region in the image
+                    trackingFace = 1
 
 
             #Check if the tracker is actively tracking a region in the image

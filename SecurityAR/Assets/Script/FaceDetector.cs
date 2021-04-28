@@ -34,20 +34,26 @@ public class FaceDetector : MonoBehaviour
         int width = frame.Width;
         int height = frame.Height;
 
-        OpenCvSharp.Rect? maybeFaceLoc = findNewface(frame);
-        if (!maybeFaceLoc.HasValue)
+        //for loop this bad boy
+        OpenCvSharp.Rect[] maybeFaceLoc = findNewfaces(frame);
+        if (maybeFaceLoc.Length <= 0)
         {
             return;
         }
 
-        OpenCvSharp.Rect faceLoc = maybeFaceLoc.Value;
+        //OpenCvSharp.Rect faceLoc = maybeFaceLoc.Value;
 
-        Mat subFrame = frame
-            .ColRange(faceLoc.Location.X, faceLoc.Location.X + faceLoc.Width)
-            .RowRange(faceLoc.Location.Y, faceLoc.Location.Y + faceLoc.Height);
-        blurFace(subFrame);
+        for (int i = 0; i < maybeFaceLoc.Length; i++)
+		  {
+			    Mat subFrame = frame
+            .ColRange(maybeFaceLoc[i].Location.X, maybeFaceLoc[i].Location.X + maybeFaceLoc[i].Width)
+            .RowRange(maybeFaceLoc[i].Location.Y, maybeFaceLoc[i].Location.Y + maybeFaceLoc[i].Height);
 
-        display(frame, faceLoc);
+        		blurFace(subFrame);
+		   }
+        
+
+        display(frame, maybeFaceLoc);
     }
 
     Mat spliceImage(Mat fullFrame, OpenCvSharp.Rect portion, Mat filler)
@@ -61,24 +67,29 @@ public class FaceDetector : MonoBehaviour
         return fullFrame;
     }
 
-    OpenCvSharp.Rect? findNewface(Mat frame)
+    OpenCvSharp.Rect[] findNewfaces(Mat frame)
     {
+    	  //Use this to do multi-face tracking
         var faces = cascade.DetectMultiScale(frame, 1.1, 2, HaarDetectionType.ScaleImage);
-        if (faces.Length >= 1)
+        /*if (faces.Length >= 1)
         {
             Debug.Log(faces[0].Location);
             return faces[0];
-        }
+        }*/
 
-        return null;
+        return faces;
 
     }
 
-    void display(Mat frame, OpenCvSharp.Rect face)
+    void display(Mat frame, OpenCvSharp.Rect[] face)
     {
-       if(face != null)
+       if(face.Length > 0)
         {
-            frame.Rectangle(face, new Scalar(250, 0, 0), 2);
+        		for (int i = 0; i < face.Length; i++)
+		   {
+			    frame.Rectangle(face[i], new Scalar(250, 0, 0), 2);
+		   }
+            
         }
 
         Texture newTexture = OpenCvSharp.Unity.MatToTexture(frame);

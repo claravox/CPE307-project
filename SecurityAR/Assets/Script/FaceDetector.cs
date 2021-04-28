@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.IO;
+using System;
 using OpenCvSharp;
 
 public class FaceDetector : MonoBehaviour
@@ -10,6 +12,9 @@ public class FaceDetector : MonoBehaviour
     CascadeClassifier cascade;
     OpenCvSharp.Rect MyFace;
     Texture newTexture;
+
+    public bool live = true;
+
     public int resWidth = 2550;
     public int resHeight = 3300;
 
@@ -17,29 +22,41 @@ public class FaceDetector : MonoBehaviour
     void Start()
     {
         WebCamDevice[] devices = WebCamTexture.devices;
-        float width = GetComponentInParent<RectTransform>().rect.width;
-        float height = GetComponentInParent<RectTransform>().rect.height;
-        Debug.Log("width = " + width);
-        Debug.Log("height = " + height);
+        
+        //No device is availble
+        if(devices.Length == 0)
+        {
+            Debug.Log("There is no camera device availble");
+            this.enabled = false;
+        }
+        else
+        {
+            float width = GetComponentInParent<RectTransform>().rect.width;
+            float height = GetComponentInParent<RectTransform>().rect.height;
+            Debug.Log("width = " + width);
+            Debug.Log("height = " + height);
 
-        _webCamTexture = new WebCamTexture(devices[0].name, (int)width, (int)height, 60);
-        //_webCamTexture = new WebCamTexture(devices[0].name);
+            _webCamTexture = new WebCamTexture(devices[0].name, (int)width, (int)height, 60);
+            //_webCamTexture = new WebCamTexture(devices[0].name);
 
-        _webCamTexture.Play();
-        Debug.Log("webcam width = " + _webCamTexture.width);
-        Debug.Log("webcam height = " + _webCamTexture.height);
-        cascade = new CascadeClassifier(Application.dataPath + @"/OpenCV+Unity/Demo/Face_Detector/haarcascade_frontalface_default.xml");
+            _webCamTexture.Play();
+            Debug.Log("webcam width = " + _webCamTexture.width);
+            Debug.Log("webcam height = " + _webCamTexture.height);
+            cascade = new CascadeClassifier(Application.dataPath + @"/OpenCV+Unity/Demo/Face_Detector/haarcascade_frontalface_default.xml");
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
         GetComponent<CanvasRenderer>().SetTexture(_webCamTexture);
-        //GetComponent<Renderer>().material.mainTexture = _webCamTexture;
+        
+        //Use OpenCV to find face _webCamTexture
         Mat frame = OpenCvSharp.Unity.TextureToMat(_webCamTexture);
-
         findNewface(frame);
-        display(frame);
+
+        if(live)
+            display(frame);
     }
 
     void findNewface(Mat frame)
@@ -59,8 +76,6 @@ public class FaceDetector : MonoBehaviour
             frame.Rectangle(MyFace, new Scalar(250, 0, 0), 2);
         }
         newTexture = OpenCvSharp.Unity.MatToTexture(frame);
-        
-        //GetComponent<Renderer>().material.mainTexture = newTexture;
         GetComponent<CanvasRenderer>().SetTexture(newTexture);
     }
 
@@ -71,14 +86,33 @@ public class FaceDetector : MonoBehaviour
                              width, height,
                              System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
     }
-
+    
+    // takePhoto used for shutter button onClick event
     public void takePhoto()
     {
         Texture2D screenShot = (Texture2D)newTexture;
         byte[] bytes = screenShot.EncodeToPNG();
         string filename = ScreenShotName(resWidth, resHeight);
-        System.IO.File.WriteAllBytes(filename, bytes);
-        Debug.Log(string.Format("Took screenshot to: {0}", filename));
+
+        try
+        {
+            using (FileStream fs = File.Create(filename))
+            {
+                fs.Write(bytes, 0, bytes.Length);
+                Debug.Log(string.Format("Took screenshot to: {0}", filename));
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.Log("Photo Not Saved: Path Invalid");
+            Debug.Log(ex.ToString());
+        }
+
     }
 
+    public void liveMode()
+    {
+        live = !live;
+        Debug.Log("Live Mode is currently" + live);
+    }
 }

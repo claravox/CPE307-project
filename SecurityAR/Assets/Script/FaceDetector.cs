@@ -12,7 +12,12 @@ public class FaceDetector : MonoBehaviour
     CascadeClassifier cascade;
     OpenCvSharp.Rect MyFace;
     Texture newTexture;
-    
+
+    public Sprite[] imagePrefabs;
+    public enum blurOption {gaussian, pixel, face, flower, mask};
+    public blurOption BlurType;
+
+
     public bool live = true;
     public int resWidth = 2550;
     public int resHeight = 3300;
@@ -72,15 +77,44 @@ public class FaceDetector : MonoBehaviour
 
         for (int i = 0; i < maybeFaceLoc.Length; i++)
 		  {
-			    Mat subFrame = frame
-            .ColRange(maybeFaceLoc[i].Location.X, maybeFaceLoc[i].Location.X + maybeFaceLoc[i].Width)
-            .RowRange(maybeFaceLoc[i].Location.Y, maybeFaceLoc[i].Location.Y + maybeFaceLoc[i].Height);
-
-        		blurFace(subFrame);
+			Mat subFrame = frame
+                .ColRange(maybeFaceLoc[i].Location.X, maybeFaceLoc[i].Location.X + maybeFaceLoc[i].Width)
+                .RowRange(maybeFaceLoc[i].Location.Y, maybeFaceLoc[i].Location.Y + maybeFaceLoc[i].Height);
+            blurOptionExecute(subFrame);
 		   }
         
         if(live)
-        display(frame, maybeFaceLoc);
+            display(frame, maybeFaceLoc);
+    }
+
+    void blurOptionExecute(Mat frame)
+    {
+
+        switch (BlurType)
+        {
+            case (blurOption.gaussian):
+                {
+                    gaussian(frame);
+                    break;
+                }
+            case (blurOption.pixel):
+                {
+                    pixel(frame);
+                    break;
+                }
+            case (blurOption.flower):
+                {
+                    break;
+                }
+            case (blurOption.mask):
+                {
+                    break;
+                }
+            case (blurOption.face):
+                {
+                    break;
+                }
+        }
     }
 
     Mat spliceImage(Mat fullFrame, OpenCvSharp.Rect portion, Mat filler)
@@ -159,12 +193,27 @@ public class FaceDetector : MonoBehaviour
     }
 
 
-    Mat blurFace(Mat boundedFace)
+    Mat gaussian(Mat boundedFace)
     {
         InputArray src = new InputArray(boundedFace);
         OutputArray dst = new OutputArray(boundedFace);
         Cv2.GaussianBlur(src, dst, kernelDimensions(boundedFace.Width, boundedFace.Height), 0);
 
        return dst.GetMat();
+    }
+
+    Mat pixel(Mat boundedFace)
+    {
+        float pScale = 0.08f;
+        Size dSize = new Size(boundedFace.Cols * pScale, boundedFace.Rows * pScale);
+        Size oSize = new Size(boundedFace.Cols, boundedFace.Rows);
+        Mat pixelated = new Mat(dSize, MatType.CV_32S);
+        Cv2.Resize(boundedFace, pixelated, dSize);
+        Cv2.Resize(pixelated, boundedFace, oSize);
+
+
+        //Cv2.GaussianBlur(src, dst, kernelDimensions(boundedFace.Width, boundedFace.Height), 0);
+
+        return boundedFace;
     }
 }

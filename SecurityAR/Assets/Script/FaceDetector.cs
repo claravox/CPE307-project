@@ -1,16 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
-using System;
 using OpenCvSharp;
+using OpenCvSharp.Tracking;
 
 public class FaceDetector : MonoBehaviour
 {
     WebCamTexture _webCamTexture;
     CascadeClassifier cascade;
-    OpenCvSharp.Rect MyFace;
+
     Texture newTexture;
     
     public bool live = true;
@@ -50,6 +51,8 @@ public class FaceDetector : MonoBehaviour
     const int FrameResetThreshold = 120;
     bool trackingFace;
 
+    private int rectArea(OpenCvSharp.Rect rect) => rect.Width * rect.Height;
+
     // Update is called once per frame
     void Update()
     {
@@ -61,26 +64,38 @@ public class FaceDetector : MonoBehaviour
         int width = frame.Width;
         int height = frame.Height;
 
-        //for loop this bad boy
-        OpenCvSharp.Rect[] maybeFaceLoc = findNewfaces(frame);
-        if (maybeFaceLoc.Length <= 0)
+        OpenCvSharp.Rect[] maybeFaces = findNewfaces(frame);
+        if (maybeFaces.Length <= 1)
         {
             return;
         }
 
-        //OpenCvSharp.Rect faceLoc = maybeFaceLoc.Value;
+        Array.Sort(maybeFaces, (OpenCvSharp.Rect r1, OpenCvSharp.Rect r2) =>
+            rectArea(r2).CompareTo(rectArea(r1)));
 
-        for (int i = 0; i < maybeFaceLoc.Length; i++)
-		  {
-			    Mat subFrame = frame
-            .ColRange(maybeFaceLoc[i].Location.X, maybeFaceLoc[i].Location.X + maybeFaceLoc[i].Width)
-            .RowRange(maybeFaceLoc[i].Location.Y, maybeFaceLoc[i].Location.Y + maybeFaceLoc[i].Height);
+        int[] areas = new int[maybeFaces.Length];
 
-        		blurFace(subFrame);
-		   }
+        for (int i = 0; i < maybeFaces.Length; i++)
+        {
+            areas[i] = rectArea(maybeFaces[i]);
+        }
+
+        // currently, printing the sorted rectangle areas for debug purposes
+        Debug.Log(string.Format("{0}", string.Join(",", areas)));
         
-        if(live)
-        display(frame, maybeFaceLoc);
+        for (int i = 1; i < maybeFaces.Length; i++)
+		{
+            OpenCvSharp.Rect face = maybeFaces[i];
+            Mat subFrame = frame
+                .ColRange(face.Location.X, face.Location.X + face.Width)
+                .RowRange(face.Location.Y, face.Location.Y + face.Height);
+            blurFace(subFrame);
+		}
+
+        if (live)
+        {
+             display(frame, maybeFaces, new Scalar(250, 0, 0));
+        }
     }
 
     Mat spliceImage(Mat fullFrame, OpenCvSharp.Rect portion, Mat filler)
@@ -97,26 +112,16 @@ public class FaceDetector : MonoBehaviour
     OpenCvSharp.Rect[] findNewfaces(Mat frame)
     {
     	  //Use this to do multi-face tracking
-        var faces = cascade.DetectMultiScale(frame, 1.1, 2, HaarDetectionType.ScaleImage);
-        /*if (faces.Length >= 1)
-        {
-            Debug.Log(faces[0].Location);
-            return faces[0];
-        }*/
-
-        return faces;
+        return cascade.DetectMultiScale(frame, 1.1, 2, HaarDetectionType.ScaleImage);
     }
 
-    void display(Mat frame, OpenCvSharp.Rect[] face)
+    void display(Mat frame, OpenCvSharp.Rect[] faces, Scalar color)
     {
-       if(face.Length > 0)
-        {
-        		for (int i = 0; i < face.Length; i++)
-		   {
-			    frame.Rectangle(face[i], new Scalar(250, 0, 0), 2);
-		   }
-            
-        }
+        for (int i = 0; i < faces.Length; i++)
+		{
+			frame.Rectangle(faces[i], color, 2);
+		}
+
         newTexture = OpenCvSharp.Unity.MatToTexture(frame);
         GetComponent<CanvasRenderer>().SetTexture(newTexture);
     }
@@ -132,7 +137,7 @@ public class FaceDetector : MonoBehaviour
     // takePhoto used for shutter button onClick event
     public void takePhoto()
     {
-        Texture2D screenShot = (Texture2D)newTexture;
+        Texture2D screenShot = (Texture2D) newTexture;
         byte[] bytes = screenShot.EncodeToPNG();
         string filename = ScreenShotName(resWidth, resHeight);
 
@@ -149,7 +154,6 @@ public class FaceDetector : MonoBehaviour
             Debug.Log("Photo Not Saved: Path Invalid");
             Debug.Log(ex.ToString());
         }
-
     }
 
     public void liveMode()

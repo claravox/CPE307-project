@@ -65,7 +65,7 @@ public class FaceDetector : MonoBehaviour
         int height = frame.Height;
 
         OpenCvSharp.Rect[] maybeFaces = findNewfaces(frame);
-        if (maybeFaces.Length <= 1)
+        if (maybeFaces.Length <= 0)
         {
             return;
         }

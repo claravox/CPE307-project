@@ -21,10 +21,12 @@ public class FaceDetector : MonoBehaviour
     public bool live = true;
     public int resWidth = 2550;
     public int resHeight = 3300;
-    
+
+    Mat flowerImg;
+
     // Start is called before the first frame update
     void Start()
-    {  
+    {
         WebCamDevice[] devices = WebCamTexture.devices;
         
         //No device is availble
@@ -104,6 +106,7 @@ public class FaceDetector : MonoBehaviour
                 }
             case (blurOption.flower):
                 {
+                    flower(frame);
                     break;
                 }
             case (blurOption.mask):
@@ -210,10 +213,20 @@ public class FaceDetector : MonoBehaviour
         Mat pixelated = new Mat(dSize, MatType.CV_32S);
         Cv2.Resize(boundedFace, pixelated, dSize);
         Cv2.Resize(pixelated, boundedFace, oSize);
+        return boundedFace;
+    }
 
-
-        //Cv2.GaussianBlur(src, dst, kernelDimensions(boundedFace.Width, boundedFace.Height), 0);
-
+    Mat flower(Mat boundedFace)
+    {
+        //Debug.Log(String.Format("{0}/ImageBlurSrc/1.png", Application.dataPath));
+        Debug.Log(Application.dataPath);
+        flowerImg = Cv2.ImRead(Application.dataPath + @"/ImageBlurSrc/1.png", ImreadModes.Color);
+        Debug.Log(flowerImg.Empty());
+        float x_offset = 10;
+        float y_offset = 10;
+        flowerImg.CopyTo(boundedFace);
+        //flowerImg.CopyTo(boundedFace, (OpenCvSharp.Rect(x_offset, y_offset, flowerImg.Cols, flowerImg.Row)));
+       
         return boundedFace;
     }
 }

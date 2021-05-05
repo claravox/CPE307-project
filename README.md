@@ -6,4 +6,4 @@
 - Adam Perlin
 
 ## System Architecture
-![System Architecture diagram]("./Security AR Deployment Diagram.png" "System Architecture")
+![System Architecture diagram](security-ar-diagram.png "System Architecture")

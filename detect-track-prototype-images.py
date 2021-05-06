@@ -19,15 +19,13 @@ import time
 #Initialize a face cascade using the frontal face haar cascade provided with
 #the OpenCV library
 faceCascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-#The deisred output width and height
-# Commenting, don't seem to be using?
-#OUTPUT_SIZE_WIDTH = 775
-#OUTPUT_SIZE_HEIGHT = 600
 
-# load Caffe model
-#model = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
+
 
 def detectAndTrackLargestFace():
+    # Image to put over face
+    flower = cv2.imread('flower.png', cv2.IMREAD_UNCHANGED)
+
     #Open the first webcame device
     capture = cv2.VideoCapture(0)
     time.sleep(0.5)
@@ -129,11 +127,15 @@ def detectAndTrackLargestFace():
                     # get the face image
                     face = frame[start_y: end_y, start_x: end_x]
                     # apply gaussian blur to this face
-                    face = cv2.GaussianBlur(face, (kernel_width, kernel_height), 0)
+                    #face = cv2.GaussianBlur(face, (kernel_width, kernel_height), 0)
                     # put the blurred face into the original image
-                    frame[start_y: end_y, start_x: end_x] = face
+                    #frame[start_y: end_y, start_x: end_x] = face
 
                     #cv2.rectangle(frame, (x, y), (x + w, y + h), (255,0,0), 2)
+
+                    #Finally, we want to show the images on the screen
+                    flower_new = cv2.resize(flower, (w, h), interpolation = cv2.INTER_AREA)
+                    overlay_transparent(frame, flower_new, x, y)
 
                 else:
                     #If the quality of the tracking update is not
@@ -144,8 +146,6 @@ def detectAndTrackLargestFace():
                     trackingFace = 0
 
 
-
-            #Finally, we want to show the images on the screen
             cv2.imshow("Frame", frame)
 
             frame_num += 1
@@ -158,6 +158,42 @@ def detectAndTrackLargestFace():
     except KeyboardInterrupt as e:
         cv2.destroyAllWindows()
         exit(0)
+
+
+# https://stackoverflow.com/questions/40895785/using-opencv-to-overlay-transparent-image-onto-another-image
+def overlay_transparent(background, overlay, x, y):
+
+    background_width = background.shape[1]
+    background_height = background.shape[0]
+
+    if x >= background_width or y >= background_height:
+        return background
+
+    h, w = overlay.shape[0], overlay.shape[1]
+
+    if x + w > background_width:
+        w = background_width - x
+        overlay = overlay[:, :w]
+
+    if y + h > background_height:
+        h = background_height - y
+        overlay = overlay[:h]
+
+    if overlay.shape[2] < 4:
+        overlay = np.concatenate(
+            [
+                overlay,
+                np.ones((overlay.shape[0], overlay.shape[1], 1), dtype = overlay.dtype) * 255
+            ],
+            axis = 2,
+        )
+
+    overlay_image = overlay[..., :3]
+    mask = overlay[..., 3:] / 255.0
+
+    background[y:y+h, x:x+w] = (1.0 - mask) * background[y:y+h, x:x+w] + mask * overlay_image
+
+    return background
 
 
 if __name__ == '__main__':

@@ -12,6 +12,8 @@ public class FaceDetector : MonoBehaviour
     CascadeClassifier cascade;
     OpenCvSharp.Rect MyFace;
     Texture newTexture;
+    public float FaceX;
+    public float FaceY;
     
     public bool live = true;
     public int resWidth = 2550;
@@ -68,6 +70,10 @@ public class FaceDetector : MonoBehaviour
             return;
         }
 
+        // Temporary, eventually want this to applied to all faces in for loop like below
+        FaceX = maybeFaceLoc[0].Location.X;
+        FaceY = maybeFaceLoc[0].Location.Y;
+
         //OpenCvSharp.Rect faceLoc = maybeFaceLoc.Value;
 
         for (int i = 0; i < maybeFaceLoc.Length; i++)
@@ -111,7 +117,7 @@ public class FaceDetector : MonoBehaviour
     {
        if(face.Length > 0)
         {
-        		for (int i = 0; i < face.Length; i++)
+        	for (int i = 0; i < face.Length; i++)
 		   {
 			    frame.Rectangle(face[i], new Scalar(250, 0, 0), 2);
 		   }

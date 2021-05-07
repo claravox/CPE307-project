@@ -19,7 +19,7 @@ import time
 #Initialize a face cascade using the frontal face haar cascade provided with
 #the OpenCV library
 faceCascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-
+resize_img_factor = 0.52
 
 
 def detectAndTrackLargestFace():
@@ -134,8 +134,8 @@ def detectAndTrackLargestFace():
                     #cv2.rectangle(frame, (x, y), (x + w, y + h), (255,0,0), 2)
 
                     #Finally, we want to show the images on the screen
-                    flower_new = cv2.resize(flower, (w, h), interpolation = cv2.INTER_AREA)
-                    overlay_transparent(frame, flower_new, x, y)
+                    flower_new = cv2.resize(flower, (w + int(resize_img_factor * w), h + int(resize_img_factor * h)), interpolation = cv2.INTER_AREA)
+                    overlay_transparent(frame, flower_new, x - int(resize_img_factor * w * 0.5), y - int(resize_img_factor * h * 0.9))
 
                 else:
                     #If the quality of the tracking update is not

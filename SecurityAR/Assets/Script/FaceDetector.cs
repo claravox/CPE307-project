@@ -8,15 +8,16 @@ using OpenCvSharp;
 
 public class FaceDetector : MonoBehaviour
 {
-    WebCamTexture _webCamTexture;
+    public WebCamTexture _webCamTexture;
     CascadeClassifier cascade;
     OpenCvSharp.Rect MyFace;
     Texture newTexture;
 
+    public OpenCvSharp.Rect[] Face;
+
     public Sprite[] imagePrefabs;
     public enum blurOption {gaussian, pixel, face, flower, mask};
     public blurOption BlurType;
-
 
     public bool live = true;
     public int resWidth = 2550;
@@ -75,6 +76,8 @@ public class FaceDetector : MonoBehaviour
             return;
         }
 
+        // Temporary, eventually want this to applied to all faces in for loop like below
+        Face = maybeFaceLoc;
         //OpenCvSharp.Rect faceLoc = maybeFaceLoc.Value;
 
         for (int i = 0; i < maybeFaceLoc.Length; i++)
@@ -148,7 +151,7 @@ public class FaceDetector : MonoBehaviour
     {
        if(face.Length > 0)
         {
-        		for (int i = 0; i < face.Length; i++)
+        	for (int i = 0; i < face.Length; i++)
 		   {
 			    frame.Rectangle(face[i], new Scalar(250, 0, 0), 2);
 		   }

@@ -8,12 +8,11 @@ using OpenCvSharp;
 
 public class FaceDetector : MonoBehaviour
 {
-    WebCamTexture _webCamTexture;
+    public WebCamTexture _webCamTexture;
     CascadeClassifier cascade;
     OpenCvSharp.Rect MyFace;
     Texture newTexture;
-    public float FaceX;
-    public float FaceY;
+    public OpenCvSharp.Rect[] Face;
     
     public bool live = true;
     public int resWidth = 2550;
@@ -71,9 +70,7 @@ public class FaceDetector : MonoBehaviour
         }
 
         // Temporary, eventually want this to applied to all faces in for loop like below
-        FaceX = maybeFaceLoc[0].Location.X;
-        FaceY = maybeFaceLoc[0].Location.Y;
-
+        Face = maybeFaceLoc;
         //OpenCvSharp.Rect faceLoc = maybeFaceLoc.Value;
 
         for (int i = 0; i < maybeFaceLoc.Length; i++)

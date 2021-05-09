@@ -121,12 +121,25 @@ public class FaceDetector : MonoBehaviour
         GetComponent<CanvasRenderer>().SetTexture(newTexture);
     }
 
-    public static string ScreenShotName(int width, int height)
+    private static void createDirIfNotExists(string dir)
     {
-        return string.Format("{0}/screenshots/screen_{1}x{2}_{3}.png",
-                             Application.dataPath,
+        if (!Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
+    }
+
+    private static string getStorageRootDir()
+    {
+        return Path.Combine(Application.persistentDataPath, "screenshots");
+    }
+
+    public static string ScreenShotName(string root, int width, int height)
+    {
+        return string.Format("{0}/screen_{1}x{2}_{3}.png",
+                             root,
                              width, height,
-                             System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
+                             DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
     }
     
     // takePhoto used for shutter button onClick event
@@ -134,22 +147,14 @@ public class FaceDetector : MonoBehaviour
     {
         Texture2D screenShot = (Texture2D)newTexture;
         byte[] bytes = screenShot.EncodeToPNG();
-        string filename = ScreenShotName(resWidth, resHeight);
 
-        try
-        {
-            using (FileStream fs = File.Create(filename))
-            {
-                fs.Write(bytes, 0, bytes.Length);
-                Debug.Log(string.Format("Took screenshot to: {0}", filename));
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.Log("Photo Not Saved: Path Invalid");
-            Debug.Log(ex.ToString());
-        }
+        string storageRoot = getStorageRootDir();
+        createDirIfNotExists(storageRoot);
 
+        string filename = ScreenShotName(storageRoot, resWidth, resHeight);
+
+        File.WriteAllBytes(filename, bytes);
+        Debug.Log(string.Format("SecurityAR: saved image to: {0}", filename));
     }
 
     public void liveMode()

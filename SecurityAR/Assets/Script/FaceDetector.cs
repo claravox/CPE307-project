@@ -5,10 +5,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
 using OpenCvSharp;
+using UnityEngine.Networking;
 using OpenCvSharp.Tracking;
 
 public class FaceDetector : MonoBehaviour
 {
+
+
     WebCamTexture _webCamTexture;
     CascadeClassifier cascade;
 
@@ -17,49 +20,113 @@ public class FaceDetector : MonoBehaviour
     public bool live = true;
     public int resWidth = 2550;
     public int resHeight = 3300;
-    
-    // Start is called before the first frame update
-    void Start()
-    {  
-        WebCamDevice[] devices = WebCamTexture.devices;
-        
-        //No device is availble
-        if(devices.Length == 0)
+
+    bool onMobile { get { return Application.platform == RuntimePlatform.Android; } }
+
+    const string HaarClassifierDataPathPC = @"/OpenCV+Unity/Demo/Face_Detector/haarcascade_frontalface_default.xml";
+
+    string getClassifierDataPath()
+    {
+        if (!onMobile)
         {
-            Debug.Log("There is no camera device availble");
-            this.enabled = false;
+            return Application.dataPath + HaarClassifierDataPathPC;
         }
-        else
+
+        string url = Path.Combine(Application.streamingAssetsPath, "haarcascade_frontalface_default.xml");
+        Debug.Log(string.Format("SecurityAR: url: {0}", url));
+       
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
-            float width = GetComponentInParent<RectTransform>().rect.width;
-            float height = GetComponentInParent<RectTransform>().rect.height;
-            Debug.Log("width = " + width);
-            Debug.Log("height = " + height);
+            var task = request.SendWebRequest();
+            while (!task.isDone)
+            {
+            }
 
-            _webCamTexture = new WebCamTexture(devices[0].name, (int)width, (int)height, 60);
-            //_webCamTexture = new WebCamTexture(devices[0].name);
+            if (task.webRequest.isNetworkError || task.webRequest.isHttpError)
+            {
+                Debug.Log("SecurityAR: Failed to fetch asset file!");
+                throw new Exception(string.Format("SecurityAR: Failed to fetch asset file {0}", task.webRequest.error.ToString()));
+            }
 
-            _webCamTexture.Play();
-            Debug.Log("webcam width = " + _webCamTexture.width);
-            Debug.Log("webcam height = " + _webCamTexture.height);
-            cascade = new CascadeClassifier(Application.dataPath + @"/OpenCV+Unity/Demo/Face_Detector/haarcascade_frontalface_default.xml");
+            var text = task.webRequest.downloadHandler.text;
+
+            string targetPath = Path.Combine(Application.persistentDataPath, "haarcascade_frontalface_default.xml");
+            if (!File.Exists(targetPath))
+            {
+                File.WriteAllText(targetPath, text);
+            }
+
+            return targetPath;
         }
     }
 
-    private Size kernelDimensions(int width, int height) => new Size( (width / 7) | 1, (height / 7) | 1);
+            // Start is called before the first frame update
+    void Start()
+    {
+        WebCamDevice[] devices = WebCamTexture.devices;
+        WebCamDevice camera;
 
-    const int FrameResetThreshold = 120;
-    bool trackingFace;
+
+        //No device is availble
+        if (devices.Length == 0)
+        {
+            Debug.Log("There is no camera device availble");
+            this.enabled = false;
+            return;
+        }
+
+        float width;
+        float height;
+        
+
+        if (onMobile && devices.Length > 1)
+        {
+            camera = devices[1];
+        }
+        else
+        {
+            camera = devices[0];
+        }
+
+   
+        width = GetComponent<RectTransform>().rect.width;
+        height = GetComponent<RectTransform>().rect.height;
+        
+      
+        Debug.Log("width = " + width);
+        Debug.Log("height = " + height);
+
+        _webCamTexture = new WebCamTexture(camera.name, (int)width, (int)height, 60);
+
+        _webCamTexture.Play();
+        Debug.Log("webcam width = " + _webCamTexture.width);
+        Debug.Log("webcam height = " + _webCamTexture.height);
+
+        cascade = new CascadeClassifier(getClassifierDataPath());
+    }
+    
+
+    private Size kernelDimensions(int width, int height) => new Size( (width / 7) | 1, (height / 7) | 1);
 
     private int rectArea(OpenCvSharp.Rect rect) => rect.Width * rect.Height;
 
     // Update is called once per frame
     void Update()
     {
+
+
+
+
         GetComponent<CanvasRenderer>().SetTexture(_webCamTexture);
-        
+       
         //Use OpenCV to find face _webCamTexture
         Mat frame = OpenCvSharp.Unity.TextureToMat(_webCamTexture);
+
+        /*
+        if (onMobile)
+        {
+            frame.Rotate(RotateFlags.Rotate90Clockwise);
+        }*/
 
         int width = frame.Width;
         int height = frame.Height;

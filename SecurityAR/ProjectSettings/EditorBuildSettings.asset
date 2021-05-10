@@ -4,5 +4,10 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
-  m_configObjects: {}
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/1.1 - Kitty.unity
+    guid: 2a9778a854d4f15428843701dff6c96c
+  m_configObjects:
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: c3c32c7d0c22044b88979100b6c2e502,
+      type: 2}

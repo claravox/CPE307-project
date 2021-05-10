@@ -73,7 +73,6 @@ public class FaceDetector : MonoBehaviour
     {
         imageOverlay = GameObject.Find("ImageFaceOverlay").GetComponent<ImageFollowFace>();
         WebCamDevice[] devices = WebCamTexture.devices;
-        WebCamDevice camera;
 
         //No device is availble
         if (devices.Length == 0)
@@ -93,11 +92,15 @@ public class FaceDetector : MonoBehaviour
                 {
                     frontCamName = devices[i].name;
                     _frontCamTexture = new WebCamTexture(frontCamName, resWidth, resHeight, 60);
+                    if (_frontCamTexture == null)
+                        _frontCamTexture = new WebCamTexture(frontCamName);
                 }
                 else
                 {
                     backCamName = devices[i].name;
                     _backCamTexture = new WebCamTexture(backCamName, resWidth, resHeight, 60);
+                    if (_backCamTexture == null)
+                        _backCamTexture = new WebCamTexture(backCamName);
                 }
             }
 
@@ -107,7 +110,7 @@ public class FaceDetector : MonoBehaviour
             else
                 _defaultCamTexture = _backCamTexture;
 
-            //_defaultCamTexture = new WebCamTexture(devices[0].name, (int)width, (int)height, 60);
+            _defaultCamTexture = new WebCamTexture(devices[0].name, (int)width, (int)height, 60);
             _defaultCamTexture.Play();
             float newXScale = _defaultCamTexture.width / width;
             float newYScale = _defaultCamTexture.height / height;

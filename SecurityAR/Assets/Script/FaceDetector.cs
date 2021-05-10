@@ -29,7 +29,11 @@ public class FaceDetector : MonoBehaviour
     void Start()
     {
         WebCamDevice[] devices = WebCamTexture.devices;
+<<<<<<< Updated upstream
         
+=======
+
+>>>>>>> Stashed changes
         //No device is availble
         if(devices.Length == 0)
         {
@@ -43,6 +47,7 @@ public class FaceDetector : MonoBehaviour
             Debug.Log("width = " + width);
             Debug.Log("height = " + height);
 
+<<<<<<< Updated upstream
             _webCamTexture = new WebCamTexture(devices[0].name, (int)width, (int)height, 60);
             //_webCamTexture = new WebCamTexture(devices[0].name);
 
@@ -68,18 +73,100 @@ public class FaceDetector : MonoBehaviour
 
         int width = frame.Width;
         int height = frame.Height;
+=======
+            for (var i = 0; i < devices.Length; i++)
+            {
+                if (devices[i].isFrontFacing)
+                {
+                    frontCamName = devices[i].name;
+                    //for mobile only
+                    //Resolution[] front = devices[0].availableResolutions;
+                    //_frontCamTexture = new WebCamTexture(frontCamName, front[0].width, front[0].height, front[0].refreshRate);
+                    _frontCamTexture = new WebCamTexture(frontCamName, resWidth, resHeight, 60);
+                }
+                else
+                {
+                    backCamName = devices[i].name;
+                    _backCamTexture = new WebCamTexture(backCamName, resWidth, resHeight, 60);
+                }
+            }
+
+            //set default to front if there is front
+            if (_frontCamTexture != null)
+                _defaultCamTexture = _frontCamTexture;
+            else
+                _defaultCamTexture = _backCamTexture;
+
+            //_defaultCamTexture = new WebCamTexture(devices[0].name, (int)width, (int)height, 60);
+            _defaultCamTexture.Play();
+            float newXScale = _defaultCamTexture.width / width;
+            float newYScale = _defaultCamTexture.height / height;
+            Vector3 newScale = new Vector3(newXScale, newYScale, 1.0f);
+            GetComponentInParent<RectTransform>().transform.localScale = newScale;
+            cascade = new CascadeClassifier(getClassifierDataPath());
+        }
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        //if the camera solution changes
+
+        float width = GetComponentInParent<RectTransform>().rect.width;
+        float height = GetComponentInParent<RectTransform>().rect.height;
+        float newXScale = _defaultCamTexture.width / width;
+        float newYScale = _defaultCamTexture.height / height;
+        Vector3 newScale = new Vector3(newXScale, newYScale, 1.0f);
+        GetComponentInParent<RectTransform>().transform.localScale = newScale;
+
+        GetComponent<CanvasRenderer>().SetTexture(_defaultCamTexture);
+
+        //Use OpenCV to find face _defaultCamTexture
+        Mat frame = OpenCvSharp.Unity.TextureToMat(_defaultCamTexture);
+
+        /*
+        if (onMobile)
+        {
+            frame.Rotate(RotateFlags.Rotate90Clockwise);
+        }*/
+
+        OpenCvSharp.Rect[] maybeFaces = findNewfaces(frame);
+        Face = maybeFaces;
+        if (maybeFaces.Length <= 0)
+        {
+            return;
+        }
+
+>>>>>>> Stashed changes
 
         //for loop this bad boy
         OpenCvSharp.Rect[] maybeFaceLoc = findNewfaces(frame);
         if (maybeFaceLoc.Length <= 0)
         {
+<<<<<<< Updated upstream
             return;
+=======
+            areas[i] = rectArea(maybeFaces[i]);
+        }
+
+        // currently, printing the sorted rectangle areas for debug purposes
+        //Debug.Log(string.Format("{0}", string.Join(",", areas)));
+
+        for (int i = 1; i < maybeFaces.Length; i++)
+        {
+            OpenCvSharp.Rect face = maybeFaces[i];
+            Mat subFrame = frame
+                .ColRange(face.Location.X, face.Location.X + face.Width)
+                .RowRange(face.Location.Y, face.Location.Y + face.Height);
+                blurOptionExecute(subFrame);
+>>>>>>> Stashed changes
         }
 
         // Temporary, eventually want this to applied to all faces in for loop like below
         Face = maybeFaceLoc;
         //OpenCvSharp.Rect faceLoc = maybeFaceLoc.Value;
 
+<<<<<<< Updated upstream
         for (int i = 0; i < maybeFaceLoc.Length; i++)
 		  {
 			Mat subFrame = frame
@@ -90,6 +177,64 @@ public class FaceDetector : MonoBehaviour
         
         if(live)
             display(frame, maybeFaceLoc);
+=======
+        if (live)
+            display(frame, maybeFaces, new Scalar(250, 0, 0));
+        else
+            imageOverlay.disableImageOverlay();
+    }
+
+
+    private string checkDeviceType()
+    {
+        string m_DeviceType = null;
+
+        if (SystemInfo.deviceType == DeviceType.Desktop)
+        {
+            m_DeviceType = "Desktop";
+        }
+        if (SystemInfo.deviceType == DeviceType.Handheld)
+        {
+            m_DeviceType = "Handheld";
+        }
+        return m_DeviceType;
+    }
+    private Size kernelDimensions(int width, int height) => new Size((width / 7) | 1, (height / 7) | 1);
+
+    private int rectArea(OpenCvSharp.Rect rect) => rect.Width * rect.Height;
+
+
+    public void setMode(int modeIndex)
+    {
+        switch (modeIndex)
+        {
+            case 0:
+                {
+                    BlurType = blurOption.gaussian;
+                    break;
+                }
+            case 1:
+                {
+                    BlurType = blurOption.pixel;
+                    break;
+                }
+            case 2:
+                {
+                    BlurType = blurOption.flower;
+                    break;
+                }
+            case 3:
+                {
+                    BlurType = blurOption.face;
+                    break;
+                }
+            case 4:
+                {
+                    BlurType = blurOption.mask;
+                    break;
+                }
+        }
+>>>>>>> Stashed changes
     }
 
     void blurOptionExecute(Mat frame)

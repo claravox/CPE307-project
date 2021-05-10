@@ -92,12 +92,12 @@ public class FaceDetector : MonoBehaviour
                 if (devices[i].isFrontFacing)
                 {
                     frontCamName = devices[i].name;
-                    _frontCamTexture = new WebCamTexture(frontCamName);
+                    _frontCamTexture = new WebCamTexture(frontCamName, resWidth, resHeight, 60);
                 }
                 else
                 {
                     backCamName = devices[i].name;
-                    _backCamTexture = new WebCamTexture(backCamName);
+                    _backCamTexture = new WebCamTexture(backCamName, resWidth, resHeight, 60);
                 }
             }
 
@@ -108,7 +108,6 @@ public class FaceDetector : MonoBehaviour
                 _defaultCamTexture = _backCamTexture;
 
             //_defaultCamTexture = new WebCamTexture(devices[0].name, (int)width, (int)height, 60);
-            _defaultCamTexture = new WebCamTexture(devices[0].name);
             _defaultCamTexture.Play();
             float newXScale = _defaultCamTexture.width / width;
             float newYScale = _defaultCamTexture.height / height;
@@ -118,28 +117,16 @@ public class FaceDetector : MonoBehaviour
         }
     }
 
-
-    private string checkDeviceType()
-    {
-        string m_DeviceType = null;
-
-        if (SystemInfo.deviceType == DeviceType.Desktop)
-        {
-            m_DeviceType = "Desktop";
-        }
-        if (SystemInfo.deviceType == DeviceType.Handheld)
-        {
-            m_DeviceType = "Handheld";
-        }
-        return m_DeviceType;
-    }
-    private Size kernelDimensions(int width, int height) => new Size((width / 7) | 1, (height / 7) | 1);
-
-    private int rectArea(OpenCvSharp.Rect rect) => rect.Width * rect.Height;
-
     // Update is called once per frame
     void Update()
     {
+        float width = GetComponentInParent<RectTransform>().rect.width;
+        float height = GetComponentInParent<RectTransform>().rect.height;
+        float newXScale = _defaultCamTexture.width / width;
+        float newYScale = _defaultCamTexture.height / height;
+        Vector3 newScale = new Vector3(newXScale, newYScale, 1.0f);
+        GetComponentInParent<RectTransform>().transform.localScale = newScale;
+
         GetComponent<CanvasRenderer>().SetTexture(_defaultCamTexture);
 
         //Use OpenCV to find face _defaultCamTexture
@@ -151,8 +138,6 @@ public class FaceDetector : MonoBehaviour
             frame.Rotate(RotateFlags.Rotate90Clockwise);
         }*/
 
-        int width = frame.Width;
-        int height = frame.Height;
         OpenCvSharp.Rect[] maybeFaces = findNewfaces(frame);
         Face = maybeFaces;
         if (maybeFaces.Length <= 0)
@@ -172,7 +157,7 @@ public class FaceDetector : MonoBehaviour
         }
 
         // currently, printing the sorted rectangle areas for debug purposes
-        Debug.Log(string.Format("{0}", string.Join(",", areas)));
+        //Debug.Log(string.Format("{0}", string.Join(",", areas)));
 
         for (int i = 1; i < maybeFaces.Length; i++)
         {
@@ -189,6 +174,25 @@ public class FaceDetector : MonoBehaviour
         else
             imageOverlay.disableImageOverlay();
     }
+
+    private string checkDeviceType()
+    {
+        string m_DeviceType = null;
+
+        if (SystemInfo.deviceType == DeviceType.Desktop)
+        {
+            m_DeviceType = "Desktop";
+        }
+        if (SystemInfo.deviceType == DeviceType.Handheld)
+        {
+            m_DeviceType = "Handheld";
+        }
+        return m_DeviceType;
+    }
+    private Size kernelDimensions(int width, int height) => new Size((width / 7) | 1, (height / 7) | 1);
+
+    private int rectArea(OpenCvSharp.Rect rect) => rect.Width * rect.Height;
+
 
     public void setMode(int modeIndex)
     {

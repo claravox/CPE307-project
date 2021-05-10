@@ -8,7 +8,10 @@ using OpenCvSharp;
 
 public class FaceDetector : MonoBehaviour
 {
-    public WebCamTexture _webCamTexture;
+    public WebCamTexture _defaultCamTexture;
+    private WebCamTexture _frontCamTexture;
+    private WebCamTexture _backCamTexture;
+    String frontCamName, backCamName;
     CascadeClassifier cascade;
     OpenCvSharp.Rect MyFace;
     Texture newTexture;
@@ -23,36 +26,76 @@ public class FaceDetector : MonoBehaviour
     public int resWidth = 2550;
     public int resHeight = 3300;
 
-    Mat flowerImg;
-
+    ImageFollowFace imageOverlay;
     // Start is called before the first frame update
     void Start()
     {
+        imageOverlay = GameObject.Find("ImageFaceOverlay").GetComponent<ImageFollowFace>();
+
         WebCamDevice[] devices = WebCamTexture.devices;
-        
+
         //No device is availble
-        if(devices.Length == 0)
+        if (devices.Length == 0)
         {
             Debug.Log("There is no camera device availble");
             this.enabled = false;
         }
         else
         {
+
             float width = GetComponentInParent<RectTransform>().rect.width;
             float height = GetComponentInParent<RectTransform>().rect.height;
-            Debug.Log("width = " + width);
-            Debug.Log("height = " + height);
 
-            _webCamTexture = new WebCamTexture(devices[0].name, (int)width, (int)height, 60);
-            //_webCamTexture = new WebCamTexture(devices[0].name);
+            for (var i = 0; i < devices.Length; i++)
+            {
+                if (devices[i].isFrontFacing)
+                {
+                    frontCamName = devices[i].name;
+                    _frontCamTexture = new WebCamTexture(frontCamName);
+                }
+                else
+                {
+                    backCamName = devices[i].name;
+                    _backCamTexture = new WebCamTexture(backCamName);
+                }
+            }
 
-            _webCamTexture.Play();
-            Debug.Log("webcam width = " + _webCamTexture.width);
-            Debug.Log("webcam height = " + _webCamTexture.height);
+            //set default to front if there is front
+            if (_frontCamTexture != null)
+                _defaultCamTexture = _frontCamTexture;
+            else
+                _defaultCamTexture = _backCamTexture;
+
+
+            //_defaultCamTexture = new WebCamTexture(devices[0].name, (int)width, (int)height, 60);
+            _defaultCamTexture = new WebCamTexture(devices[0].name);
+
+            _defaultCamTexture.Play();
+            float newXScale = _defaultCamTexture.width / width;
+            float newYScale = _defaultCamTexture.height / height;
+            Vector3 newScale = new Vector3(newXScale, newYScale, 1.0f); 
+            GetComponentInParent<RectTransform>().transform.localScale = newScale;
+
+            Debug.Log("webcam width = " + _defaultCamTexture.width);
+            Debug.Log("webcam height = " + _defaultCamTexture.height);
             cascade = new CascadeClassifier(Application.dataPath + @"/OpenCV+Unity/Demo/Face_Detector/haarcascade_frontalface_default.xml");
         }
     }
 
+    private string checkDeviceType()
+    {
+        string m_DeviceType = null;
+
+        if (SystemInfo.deviceType == DeviceType.Desktop)
+        {
+            m_DeviceType = "Desktop";
+        }
+        if (SystemInfo.deviceType == DeviceType.Handheld)
+        {
+            m_DeviceType = "Handheld";
+        }
+        return m_DeviceType;
+    }
     private Size kernelDimensions(int width, int height) => new Size( (width / 7) | 1, (height / 7) | 1);
 
     const int FrameResetThreshold = 120;
@@ -61,13 +104,10 @@ public class FaceDetector : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        GetComponent<CanvasRenderer>().SetTexture(_webCamTexture);
+        GetComponent<CanvasRenderer>().SetTexture(_defaultCamTexture);
         
-        //Use OpenCV to find face _webCamTexture
-        Mat frame = OpenCvSharp.Unity.TextureToMat(_webCamTexture);
-
-        int width = frame.Width;
-        int height = frame.Height;
+        //Use OpenCV to find face _defaultCamTexture
+        Mat frame = OpenCvSharp.Unity.TextureToMat(_defaultCamTexture);
 
         //for loop this bad boy
         OpenCvSharp.Rect[] maybeFaceLoc = findNewfaces(frame);
@@ -87,37 +127,74 @@ public class FaceDetector : MonoBehaviour
                 .RowRange(maybeFaceLoc[i].Location.Y, maybeFaceLoc[i].Location.Y + maybeFaceLoc[i].Height);
             blurOptionExecute(subFrame);
 		   }
-        
-        if(live)
+
+        if (live)
             display(frame, maybeFaceLoc);
+        else
+            imageOverlay.disableImageOverlay();
+    }
+
+    public void setMode(int modeIndex)
+    {
+        switch(modeIndex)
+        {
+            case 0:
+                {
+                    BlurType = blurOption.gaussian;
+                    break;
+                }
+            case 1:
+                {
+                    BlurType = blurOption.pixel;
+                    break;
+                }
+            case 2:
+                {
+                    BlurType = blurOption.flower;
+                    break;
+                }
+            case 3:
+                {
+                    BlurType = blurOption.face;
+                    break;
+                }
+            case 4:
+                {
+                    BlurType = blurOption.mask;
+                    break;
+                }
+        }
     }
 
     void blurOptionExecute(Mat frame)
     {
-
         switch (BlurType)
         {
             case (blurOption.gaussian):
                 {
+                    imageOverlay.disableImageOverlay();
                     gaussian(frame);
                     break;
                 }
             case (blurOption.pixel):
                 {
+                    imageOverlay.disableImageOverlay();
                     pixel(frame);
                     break;
                 }
             case (blurOption.flower):
                 {
-                    flower(frame);
+                    image("flower");
                     break;
                 }
             case (blurOption.mask):
                 {
+                    image("mask");
                     break;
                 }
             case (blurOption.face):
                 {
+                    image("face");
                     break;
                 }
         }
@@ -137,9 +214,9 @@ public class FaceDetector : MonoBehaviour
     OpenCvSharp.Rect[] findNewfaces(Mat frame)
     {
     	  //Use this to do multi-face tracking
-        var faces = cascade.DetectMultiScale(frame, 1.1, 2, HaarDetectionType.ScaleImage);
+        var faces = cascade.DetectMultiScale(frame, 1.1, 2, HaarDetectionType.ScaleImage, new Size(100,100));
         /*if (faces.Length >= 1)
-        {
+        { 
             Debug.Log(faces[0].Location);
             return faces[0];
         }*/
@@ -219,17 +296,10 @@ public class FaceDetector : MonoBehaviour
         return boundedFace;
     }
 
-    Mat flower(Mat boundedFace)
+    void image(string type)
     {
-        //Debug.Log(String.Format("{0}/ImageBlurSrc/1.png", Application.dataPath));
-        Debug.Log(Application.dataPath);
-        flowerImg = Cv2.ImRead(Application.dataPath + @"/ImageBlurSrc/1.png", ImreadModes.Color);
-        Debug.Log(flowerImg.Empty());
-        float x_offset = 10;
-        float y_offset = 10;
-        flowerImg.CopyTo(boundedFace);
-        //flowerImg.CopyTo(boundedFace, (OpenCvSharp.Rect(x_offset, y_offset, flowerImg.Cols, flowerImg.Row)));
-       
-        return boundedFace;
+        imageOverlay.changeImage(type);
+        imageOverlay.enableImageOverlay();
     }
+
 }

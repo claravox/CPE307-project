@@ -8,10 +8,16 @@ public class ImageFollowFace : MonoBehaviour
     FaceDetector faceDetector;
     GameObject cameraView;
     OpenCvSharp.Rect[] faces;
+    Image imageRender;
+    public List<Sprite> images;
 
     // Start is called before the first frame update
     void Start()
     {
+        this.enabled = false;
+        imageRender = this.GetComponent<Image>();
+        imageRender.enabled = false;
+
         faceDetector = (FaceDetector)FindObjectOfType(typeof(FaceDetector));
         cameraView = GameObject.Find("CameraView");
     }
@@ -23,12 +29,12 @@ public class ImageFollowFace : MonoBehaviour
         if (faces.Length < 1)
             return;
 
-        float x = faceDetector.transform.position.x - cameraView.GetComponent<RectTransform>().rect.width / 2 + faces[0].Location.X + faces[0].Width / 2;
-        float y = faceDetector.transform.position.y - cameraView.GetComponent<RectTransform>().rect.height / 2 + faces[0].Location.Y - faces[0].Height / 3;
+        float x = faceDetector.transform.position.x - cameraView.GetComponent<RectTransform>().rect.width * cameraView.GetComponent<RectTransform>().localScale.x / 2 + faces[0].Location.X + faces[0].Width / 2;
+        float y = faceDetector.transform.position.y + cameraView.GetComponent<RectTransform>().rect.height * cameraView.GetComponent<RectTransform>().localScale.y / 2 - faces[0].Location.Y - faces[0].Height/2;
         float x_scale = faceDetector.Face[0].Width / 100.0f;
-        float y_scale = faceDetector.Face[0].Height / 100.0f;
+        float y_scale = faceDetector.Face[0].Height / 100.0f; 
         float resScale = 1.0f;
-        if (x_scale >= y_scale)
+        if (faceDetector.Face[0].Width >= faceDetector.Face[0].Height)
             resScale = x_scale * 1.3f;
         else
             resScale = y_scale * 1.3f;
@@ -39,4 +45,41 @@ public class ImageFollowFace : MonoBehaviour
         this.transform.position = Vector3.Lerp(transform.position, facePos, Time.deltaTime*3);
 
     }
+
+    public void enableImageOverlay()
+    {
+        imageRender.enabled = true;
+        this.enabled = true;
+    }
+
+    public void disableImageOverlay()
+    {
+        imageRender.enabled = false;
+        this.enabled = false;
+    }
+
+    public void changeImage(string name)
+    {
+        switch (name)
+        {
+            case "flower":
+                {
+                    imageRender.sprite = images[0];
+                    break;
+                }
+            case "face":
+                {
+                    imageRender.sprite = images[1];
+                    break;
+                }
+            case "mask":
+                {
+                    imageRender.sprite = images[2];
+                    break;
+                }
+        }
+
+
+    }
+
 }

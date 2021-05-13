@@ -68,10 +68,10 @@ public class FaceDetector : MonoBehaviour
     }
 
     // Start is called before the first frame update
-    ImageFollowFace imageOverlay;
+    ImageOverlayManager imgMananger;
     void Start()
     {
-        imageOverlay = GameObject.Find("ImageFaceOverlay").GetComponent<ImageFollowFace>();
+        imgMananger = GameObject.Find("ImageOverlayManager").GetComponent<ImageOverlayManager>();
         WebCamDevice[] devices = WebCamTexture.devices;
 
         //No device is availble
@@ -171,11 +171,10 @@ public class FaceDetector : MonoBehaviour
                 blurOptionExecute(subFrame);
         }
 
-
         if (live)
             display(frame, maybeFaces, new Scalar(250, 0, 0));
         else
-            imageOverlay.disableImageOverlay();
+            imgMananger.disableImage();
     }
 
     private string checkDeviceType()
@@ -235,13 +234,13 @@ public class FaceDetector : MonoBehaviour
         {
             case (blurOption.gaussian):
                 {
-                    imageOverlay.disableImageOverlay();
+                    imgMananger.disableImage();
                     gaussian(frame);
                     break;
                 }
             case (blurOption.pixel):
                 {
-                    imageOverlay.disableImageOverlay();
+                    imgMananger.disableImage();
                     pixel(frame);
                     break;
                 }
@@ -356,8 +355,12 @@ public class FaceDetector : MonoBehaviour
 
     void image(string type)
     {
-        imageOverlay.changeImage(type);
-        imageOverlay.enableImageOverlay();
+        imgMananger.changeImageType(type);
+        if(imgMananger.enabled == false)
+        {
+            Debug.Log("enabling Image Overlay");
+            imgMananger.enableImage();
+        }
     }
 
 }

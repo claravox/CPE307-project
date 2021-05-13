@@ -33,6 +33,7 @@ public class ImageOverlayManager : MonoBehaviour
             {
                 for (int i = 0; i < change; i++)
                 {
+                    
                     LastRemovedImgTransform = images[images.Count - 1].transform;
                     GameObject.Destroy(images[images.Count - 1]);
                     images.RemoveAt(images.Count-1);
@@ -97,6 +98,7 @@ public class ImageOverlayManager : MonoBehaviour
             GameObject.Destroy(img);
         }
         images.Clear();
+        lastFaceCount = 0;
         this.enabled = false;
     }
 }

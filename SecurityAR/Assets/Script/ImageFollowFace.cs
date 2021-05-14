@@ -17,27 +17,9 @@ public class ImageFollowFace : MonoBehaviour
     public void Start()
     {
         imageRender = this.GetComponent<Image>();
-        //imageRender.enabled = false;
+        imageRender.enabled = true;
         cameraView = GameObject.Find("CameraView");
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        float x = cameraView.transform.position.x - cameraView.GetComponent<RectTransform>().rect.width * cameraView.GetComponent<RectTransform>().localScale.x / 2 + faceLocation.Location.X + faceLocation.Width / 2;
-        float y = cameraView.transform.position.y + cameraView.GetComponent<RectTransform>().rect.height * cameraView.GetComponent<RectTransform>().localScale.y / 2 - faceLocation.Location.Y - faceLocation.Height/2;
-        float x_scale = faceLocation.Width / 100.0f;
-        float y_scale = faceLocation.Height / 100.0f; 
-        float resScale = 1.0f;
-        if (faceLocation.Width >= faceLocation.Height)
-            resScale = x_scale * 1.3f;
-        else
-            resScale = y_scale * 1.3f;
-
-        facePos = new Vector3(x, y, transform.position.z);
-        newScale = new Vector3(resScale, resScale, 1);
-        this.GetComponent<RectTransform>().localScale = Vector3.Lerp(this.GetComponent<RectTransform>().localScale, newScale, Time.deltaTime*5);
-        this.transform.position = Vector3.Lerp(transform.position, facePos, Time.deltaTime*3);
+        this.enabled = true;
     }
 
     public void changeImage(string name)

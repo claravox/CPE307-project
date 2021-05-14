@@ -10,6 +10,9 @@ public class ImageOverlayManager : MonoBehaviour
     OpenCvSharp.Rect[] faces;
     static int lastFaceCount = 0;
     List<GameObject> images = new List<GameObject>();
+
+    List<GameObject> prevImages = new List<GameObject>();
+    List<GameObject> prevPrevImages = new List<GameObject>();
     Transform LastRemovedImgTransform;
     string Imagetype;
     void Start()
@@ -18,62 +21,55 @@ public class ImageOverlayManager : MonoBehaviour
         this.enabled = false;
     }
 
-    void FixedUpdate()
+    void Update()
     {
+        GameObject cameraView = GameObject.Find("CameraView");
+
         //get face count
         faces = GameObject.Find("CameraView").GetComponent<FaceDetector>().Face;
-        //if face count changed, change the amount of images as well
-        //there is always 1 image less the faces
-        if (lastFaceCount != faces.Length)
-        {
-            
-            int change = lastFaceCount - faces.Length;
-            //less face, destroy image that's newly added
-            if (change > 0)
-            {
-                for (int i = 0; i < change; i++)
-                {
-                    
-                    LastRemovedImgTransform = images[images.Count - 1].transform;
-                    GameObject.Destroy(images[images.Count - 1]);
-                    images.RemoveAt(images.Count-1);
-                }
-            }
-            //more face, add image
-            else if (change < 0)
-            {
-                change = -change;
-                for (int i = 0; i < change; i++)
-                {
-                    instantiateImage();
-                }
-            }
-            lastFaceCount = faces.Length;
-        }
 
-        // each image follows a face in the array except the first face
-        for (int i = 0; i < lastFaceCount; i++)
-        {
-            OpenCvSharp.Rect face = faces[i];
-            images[i].GetComponent<ImageFollowFace>().faceLocation = face;
+        // Move our lists along
 
-            if (i == 0)
-            {
-                images[i].GetComponent<Image>().enabled = false;
-            }
-        }
+       foreach(GameObject img in prevPrevImages) {
+           GameObject.Destroy(img);
+       }
+       prevPrevImages = prevImages;
+       prevImages = images;
+       images = new List<GameObject>();
+
+       for (int i = 1; i < faces.Length && i < 10; i++) {
+            OpenCvSharp.Rect faceLocation = faces[i];
+            float x = cameraView.transform.position.x - cameraView.GetComponent<RectTransform>().rect.width * cameraView.GetComponent<RectTransform>().localScale.x / 2 + faceLocation.Location.X + faceLocation.Width / 2;
+            float y = cameraView.transform.position.y + cameraView.GetComponent<RectTransform>().rect.height * cameraView.GetComponent<RectTransform>().localScale.y / 2 - faceLocation.Location.Y - faceLocation.Height/2;
+            float x_scale = faceLocation.Width / 100.0f;
+            float y_scale = faceLocation.Height / 100.0f; 
+            float resScale = 1.0f;
+            if (faceLocation.Width >= faceLocation.Height)
+                resScale = x_scale * 1.3f;
+            else
+                resScale = y_scale * 1.3f;
+
+
+            Vector3 facePos = new Vector3(x, y, cameraView.transform.position.z);
+            GameObject aImage = GameObject.Instantiate(ImagePrefab, this.gameObject.transform);
+            aImage.GetComponent<RectTransform>().localScale = new Vector3(resScale, resScale, 1);
+            aImage.transform.position = facePos;
+            aImage.SetActive(true);
+            images.Add(aImage);
+
+       }
     }
 
-    void instantiateImage()
-    {
-        Transform Spawn = this.gameObject.transform;
-        if(LastRemovedImgTransform != null)
-        {
-            Spawn = LastRemovedImgTransform;
-        }
-        GameObject aImage = GameObject.Instantiate(ImagePrefab, Spawn);
-        images.Add(aImage);
-    }
+    // void instantiateImage()
+    // {
+    //     Transform Spawn = this.gameObject.transform;
+    //     if(LastRemovedImgTransform != null)
+    //     {
+    //         Spawn = LastRemovedImgTransform;
+    //     }
+    //     GameObject aImage = GameObject.Instantiate(ImagePrefab, Spawn);
+    //     images.Add(aImage);
+    // }
 
     public void changeImageType(string name)
     {

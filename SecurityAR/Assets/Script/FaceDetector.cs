@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
@@ -275,7 +275,7 @@ public class FaceDetector : MonoBehaviour
 
     OpenCvSharp.Rect[] findNewfaces(Mat frame)
     {
-        return cascade.DetectMultiScale(frame, 1.1, 2, HaarDetectionType.ScaleImage, new Size(100, 100));
+        return cascade.DetectMultiScale(frame, 1.3, 5, HaarDetectionType.ScaleImage, new Size(100, 100));
     }
 
 

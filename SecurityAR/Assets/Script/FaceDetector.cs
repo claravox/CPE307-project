@@ -4,33 +4,41 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
-using OpenCvSharp;
 using UnityEngine.Networking;
-using OpenCvSharp.Tracking;
+using OpenCVForUnity.CoreModule;
+using OpenCVForUnity.DnnModule;
+using OpenCVForUnity.UnityUtils;
+using Rect = OpenCVForUnity.CoreModule.Rect;
+
 
 public class FaceDetector : MonoBehaviour
 {
-
-
     WebCamTexture _webCamTexture;
-    CascadeClassifier cascade;
+    //CascadeClassifier cascade;
 
-    Texture newTexture;
-    
+    Net classifier;
+
     public bool live = true;
     public int resWidth = 2550;
     public int resHeight = 3300;
 
-    bool onMobile { get { return Application.platform == RuntimePlatform.Android; } }
+    bool onAndroid { get { return Application.platform == RuntimePlatform.Android; } }
+    bool onIOS { get { return Application.platform == RuntimePlatform.IPhonePlayer; } }
+    bool onMobile { get { return onAndroid || onIOS; } }
 
-    const string HaarClassifierDataPathPC = @"/OpenCV+Unity/Demo/Face_Detector/haarcascade_frontalface_default.xml";
+    const string prototxtFileName = "deploy.prototxt.txt";
+    const string caffeModelFileName = "res10_300x300_ssd_iter_140000_fp16.caffemodel";
 
-    string getClassifierDataPath()
+    string getWeightsDataPath()
     {
         if (!onMobile)
         {
-            return Application.dataPath + HaarClassifierDataPathPC;
+            return Application.streamingAssetsPath;
         }
+
+        //TODO: update code for android to download both
+        // res10_300x300_ssd_iter_140000_fp16.caffemodel
+        // and deploy.prototxt.txt to accessible location
 
         string url = Path.Combine(Application.streamingAssetsPath, "haarcascade_frontalface_default.xml");
         Debug.Log(string.Format("SecurityAR: url: {0}", url));
@@ -102,25 +110,26 @@ public class FaceDetector : MonoBehaviour
         Debug.Log("webcam width = " + _webCamTexture.width);
         Debug.Log("webcam height = " + _webCamTexture.height);
 
-        cascade = new CascadeClassifier(getClassifierDataPath());
+        string weightsRoot = getWeightsDataPath();
+        classifier = Dnn.readNetFromCaffe(Path.Combine(weightsRoot, prototxtFileName),
+            Path.Combine(weightsRoot, caffeModelFileName));
     }
     
 
     private Size kernelDimensions(int width, int height) => new Size( (width / 7) | 1, (height / 7) | 1);
 
-    private int rectArea(OpenCvSharp.Rect rect) => rect.Width * rect.Height;
+    private int rectArea(Rect rect) => rect.width * rect.height;
 
     // Update is called once per frame
     void Update()
     {
-
-
-
-
+        Debug.Log(string.Format("classifier: {0}", classifier));
         GetComponent<CanvasRenderer>().SetTexture(_webCamTexture);
-       
+
+        Mat frame = new Mat(_webCamTexture.height, _webCamTexture.width, CvType.CV_8UC4, new Scalar(0, 0, 0, 255));
         //Use OpenCV to find face _webCamTexture
-        Mat frame = OpenCvSharp.Unity.TextureToMat(_webCamTexture);
+        Color32[] colors = new Color32[_webCamTexture.width * _webCamTexture.height];
+        Utils.webCamTextureToMat(_webCamTexture, frame, colors);
 
         /*
         if (onMobile)
@@ -128,16 +137,22 @@ public class FaceDetector : MonoBehaviour
             frame.Rotate(RotateFlags.Rotate90Clockwise);
         }*/
 
-        int width = frame.Width;
-        int height = frame.Height;
+        int width = frame.width();
+        int height = frame.height();
 
-        OpenCvSharp.Rect[] maybeFaces = findNewfaces(frame);
+        Rect[] maybeFaces = findNewfaces(frame, colors);
         if (maybeFaces.Length <= 0)
         {
+            Debug.Log("No faces detected");
             return;
         }
 
-        Array.Sort(maybeFaces, (OpenCvSharp.Rect r1, OpenCvSharp.Rect r2) =>
+        Rect face = maybeFaces[0];
+
+        Debug.Log(string.Format("Detected Face At: ({0}, {1}) width={2} height={3}",
+            face.x, face.y, face.width, face.height));
+
+        /*Array.Sort(maybeFaces, (Rect r1, Rect r2) =>
             rectArea(r2).CompareTo(rectArea(r1)));
 
         int[] areas = new int[maybeFaces.Length];
@@ -157,7 +172,7 @@ public class FaceDetector : MonoBehaviour
                 .ColRange(face.Location.X, face.Location.X + face.Width)
                 .RowRange(face.Location.Y, face.Location.Y + face.Height);
             blurFace(subFrame);
-		}
+		}*/
 
         if (live)
         {
@@ -165,6 +180,7 @@ public class FaceDetector : MonoBehaviour
         }
     }
 
+    /*
     Mat spliceImage(Mat fullFrame, OpenCvSharp.Rect portion, Mat filler)
     {
         Mat target = fullFrame
@@ -174,22 +190,34 @@ public class FaceDetector : MonoBehaviour
         filler.CopyTo(target);
 
         return fullFrame;
+    }*/
+
+    Rect[] findNewfaces(Mat frame, Color32[] colors)
+    {
+        //Use this to do multi-face tracking
+        Mat blob = Dnn.blobFromImage(frame, 1.0, new Size(frame.width(), frame.height()), new Scalar(104.0, 177.0, 123.0));
+
+        //Debug.Log(string.Format("blob: {0}", blob));
+        classifier.setInput(blob);
+        Debug.Log(string.Format("classifier 2: {0}", classifier));
+        Mat netOutput = classifier.forward();
+
+        Core.MinMaxLocResult minmax = Core.minMaxLoc(netOutput.reshape(1, 1));
+
+        return new Rect[] { new Rect(minmax.minLoc, minmax.maxLoc) };
     }
 
-    OpenCvSharp.Rect[] findNewfaces(Mat frame)
+    void display(Mat frame, Rect[] faces, Scalar color)
     {
-    	  //Use this to do multi-face tracking
-        return cascade.DetectMultiScale(frame, 1.1, 2, HaarDetectionType.ScaleImage);
-    }
 
-    void display(Mat frame, OpenCvSharp.Rect[] faces, Scalar color)
-    {
+        /*
         for (int i = 0; i < faces.Length; i++)
 		{
 			frame.Rectangle(faces[i], color, 2);
-		}
+		}*/
 
-        newTexture = OpenCvSharp.Unity.MatToTexture(frame);
+        Texture2D newTexture = new Texture2D(frame.width(), frame.height());
+        Utils.matToTexture2D(frame, newTexture);
         GetComponent<CanvasRenderer>().SetTexture(newTexture);
     }
 
@@ -213,7 +241,8 @@ public class FaceDetector : MonoBehaviour
                              width, height,
                              DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
     }
-    
+
+    /*
     // takePhoto used for shutter button onClick event
     public void takePhoto()
     {
@@ -228,6 +257,7 @@ public class FaceDetector : MonoBehaviour
         File.WriteAllBytes(filename, bytes);
         Debug.Log(string.Format("SecurityAR: saved image to: {0}", filename));
     }
+    */
 
     public void liveMode()
     {
@@ -236,6 +266,7 @@ public class FaceDetector : MonoBehaviour
     }
 
 
+    /*
     Mat blurFace(Mat boundedFace)
     {
         InputArray src = new InputArray(boundedFace);
@@ -244,4 +275,5 @@ public class FaceDetector : MonoBehaviour
 
        return dst.GetMat();
     }
+    */
 }

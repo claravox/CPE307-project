@@ -376,7 +376,7 @@ public class FaceDetector : MonoBehaviour
             GetObjects (resultObjects);
 
             rects = resultObjects.ToArray ();
-            displayLive(rgbaMat, rects, new Scalar (0, 0, 255, 255));
+            //displayLive(rgbaMat, rects, new Scalar (0, 0, 255, 255));
             for (int i = 0; i < rects.Length; i++) {
                 //Debug.Log ("detect faces " + rects [i]);
                 // TODO another blur option here?
@@ -833,17 +833,24 @@ public class FaceDetector : MonoBehaviour
 
     void display(Mat frame, Rect[] faces, Scalar color)
     {
-        Array.Sort(faces, (Rect r1, Rect r2) =>
+        Rect[] tmpFaces = new Rect[faces.Length];
+
+        Array.Copy(faces, tmpFaces, faces.Length);
+        // TODO use builtin area func
+        Array.Sort(tmpFaces, (Rect r1, Rect r2) =>
             rectArea(r2).CompareTo(rectArea(r1)));
 
         // Note: starts at 1 so main face is not blurred
-        for (int i = 1; i < faces.Length; i++)
+        for (int i = 1; i < tmpFaces.Length; i++)
         {
-            Rect face = faces[i];
-            Mat subFrame = frame
-                .colRange(face.x, face.y + face.width)
-                .rowRange(face.y, face.y + face.height);
-            blurOptionExecute(subFrame);
+            Rect face = tmpFaces[i];
+            Debug.Log("This face is: " + face);
+            if (frame != null && face != null) {
+                Mat subFrame = frame
+                    .colRange(face.x, face.x + face.width)
+                    .rowRange(face.y, face.y + face.height);
+                blurOptionExecute(subFrame);
+            }
         }
     }
 
@@ -866,6 +873,7 @@ public class FaceDetector : MonoBehaviour
                 }
             case (blurOption.pixel):
                 {
+                    // TODO add back
                     //imgMananger.disableImage();
                     pixel(frame);
                     break;

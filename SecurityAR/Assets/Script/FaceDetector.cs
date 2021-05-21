@@ -838,7 +838,7 @@ public class FaceDetector : MonoBehaviour
         Array.Copy(faces, tmpFaces, faces.Length);
         // TODO use builtin area func
         Array.Sort(tmpFaces, (Rect r1, Rect r2) =>
-            rectArea(r2).CompareTo(rectArea(r1)));
+            r2.area().CompareTo(r1.area()));
 
         // Note: starts at 1 so main face is not blurred
         for (int i = 1; i < tmpFaces.Length; i++)
@@ -897,9 +897,6 @@ public class FaceDetector : MonoBehaviour
     }
 
     private Size kernelDimensions(int width, int height) => new Size((width / 7) | 1, (height / 7) | 1);
-
-    private int rectArea(Rect rect) => rect.width * rect.height;
-
 
     Mat gaussian(Mat boundedFace)
     {

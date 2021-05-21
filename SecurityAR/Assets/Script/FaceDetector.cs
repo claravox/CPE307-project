@@ -841,7 +841,6 @@ public class FaceDetector : MonoBehaviour
         Rect[] tmpFaces = new Rect[faces.Length];
 
         Array.Copy(faces, tmpFaces, faces.Length);
-        // TODO use builtin area func
         Array.Sort(tmpFaces, (Rect r1, Rect r2) =>
             r2.area().CompareTo(r1.area()));
 
@@ -871,13 +870,15 @@ public class FaceDetector : MonoBehaviour
         {
             case (blurOption.gaussian):
                 {
-                    imgMananger.disableImage();
+                    if (imgMananger != null)
+                        imgMananger.disableImage();
                     gaussian(frame);
                     break;
                 }
             case (blurOption.pixel):
                 {
-                    imgMananger.disableImage();
+                    if (imgMananger != null)
+                        imgMananger.disableImage();
                     pixel(frame);
                     break;
                 }

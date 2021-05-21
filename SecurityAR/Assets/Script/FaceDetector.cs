@@ -958,11 +958,15 @@ public class FaceDetector : MonoBehaviour
 
     void image(string type)
     {
-        imgMananger.changeImageType(type);
-        if(imgMananger.enabled == false)
-        {
-            Debug.Log("enabling Image Overlay");
-            imgMananger.enableImage();
+        // TODO so there is an issue where the imgManager is null
+        Debug.Log(imgMananger);
+        if (imgMananger != null) {
+            imgMananger.changeImageType(type);
+            if(imgMananger.enabled == false)
+            {
+                Debug.Log("enabling Image Overlay");
+                imgMananger.enableImage();
+            }
         }
     }
 }

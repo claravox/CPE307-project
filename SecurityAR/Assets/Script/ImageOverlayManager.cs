@@ -14,8 +14,9 @@ public class ImageOverlayManager : MonoBehaviour
 
     List<GameObject> prevImages = new List<GameObject>();
     List<GameObject> prevPrevImages = new List<GameObject>();
-    Transform LastRemovedImgTransform;
     string Imagetype;
+
+    
     void Start()
     {
         Imagetype = "flower";
@@ -24,7 +25,8 @@ public class ImageOverlayManager : MonoBehaviour
 
     void Update()
     {
-        GameObject cameraView = GameObject.Find("CameraView");
+        // TODO could this go in start?
+        GameObject cameraView = GameObject.Find("Quad");
 
         //get face count
         faces = GameObject.Find("Quad").GetComponent<FaceDetector>().resultObjects.ToArray();

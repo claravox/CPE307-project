@@ -21,6 +21,13 @@ using PositionsVector = System.Collections.Generic.List<OpenCVForUnity.CoreModul
 [RequireComponent (typeof(WebCamTextureToMatHelper))]
 public class FaceDetector : MonoBehaviour
 {
+    // Our things
+    // TODO include image types
+    public enum blurOption { gaussian, pixel, face, flower, mask };
+    public blurOption BlurType;
+
+    public bool live = true;
+
     /// <summary>
     /// The gray mat.
     /// </summary>
@@ -314,7 +321,9 @@ public class FaceDetector : MonoBehaviour
                 rectsWhereRegions = detectionResult.toArray ();
             
                 rects = rectsWhereRegions;
+                displayLive(rgbaMat, rects, new Scalar (0, 0, 255, 255));
                 for (int i = 0; i < rects.Length; i++) {
+                    // TODO put decided filter here
                     Imgproc.rectangle (rgbaMat, new Point (rects [i].x, rects [i].y), new Point (rects [i].x + rects [i].width, rects [i].y + rects [i].height), new Scalar (0, 0, 255, 255), 2);
                 }
 
@@ -327,6 +336,7 @@ public class FaceDetector : MonoBehaviour
                     //if (n > 0) UnityEngine.Debug.LogError("n > 0 is false");
             
                     Rect r = trackedObjects [i].lastPositions [n - 1].clone ();
+
                     if (r.area () == 0) {
                         Debug.Log ("DetectionBasedTracker::process: ERROR: ATTENTION: strange algorithm's behavior: trackedObjects[i].rect() is empty");
                         continue;
@@ -346,7 +356,9 @@ public class FaceDetector : MonoBehaviour
                 }
 
                 rects = rectsWhereRegions;
+                displayLive(rgbaMat, rects, new Scalar (0, 0, 255, 255));
                 for (int i = 0; i < rects.Length; i++) {
+                    // TODO put decided filter here
                     Imgproc.rectangle (rgbaMat, new Point (rects [i].x, rects [i].y), new Point (rects [i].x + rects [i].width, rects [i].y + rects [i].height), new Scalar (0, 255, 0, 255), 2);
                 }
             }
@@ -364,8 +376,10 @@ public class FaceDetector : MonoBehaviour
             GetObjects (resultObjects);
 
             rects = resultObjects.ToArray ();
+            displayLive(rgbaMat, rects, new Scalar (0, 0, 255, 255));
             for (int i = 0; i < rects.Length; i++) {
                 //Debug.Log ("detect faces " + rects [i]);
+                // TODO another blur option here?
                 Imgproc.rectangle (rgbaMat, new Point (rects [i].x, rects [i].y), new Point (rects [i].x + rects [i].width, rects [i].y + rects [i].height), new Scalar (255, 0, 0, 255), 2);
             }
 
@@ -806,6 +820,103 @@ public class FaceDetector : MonoBehaviour
             _id++;
             return _id;
         }
+    }
+
+    void displayLive(Mat frame, Rect[] faces, Scalar color) {
+        if (live) {
+            display(frame, faces, color);
+        }
+        else {
+            // TODO add back imgManager
+        }
+    }
+
+    void display(Mat frame, Rect[] faces, Scalar color)
+    {
+        Array.Sort(faces, (Rect r1, Rect r2) =>
+            rectArea(r2).CompareTo(rectArea(r1)));
+
+        // Note: starts at 1 so main face is not blurred
+        for (int i = 1; i < faces.Length; i++)
+        {
+            Rect face = faces[i];
+            Mat subFrame = frame
+                .colRange(face.x, face.y + face.width)
+                .rowRange(face.y, face.y + face.height);
+            blurOptionExecute(subFrame);
+        }
+    }
+
+    public void liveMode()
+    {
+        live = !live;
+        Debug.Log("Live Mode is currently" + live);
+    }
+
+    void blurOptionExecute(Mat frame)
+    {
+        switch (BlurType)
+        {
+            case (blurOption.gaussian):
+                {
+                    // TODO add back
+                    //imgMananger.disableImage();
+                    gaussian(frame);
+                    break;
+                }
+            case (blurOption.pixel):
+                {
+                    //imgMananger.disableImage();
+                    pixel(frame);
+                    break;
+                }
+            case (blurOption.flower):
+                {
+                    image("flower");
+                    break;
+                }
+            case (blurOption.mask):
+                {
+                    image("mask");
+                    break;
+                }
+            case (blurOption.face):
+                {
+                    image("face");
+                    break;
+                }
+        }
+    }
+
+    private Size kernelDimensions(int width, int height) => new Size((width / 7) | 1, (height / 7) | 1);
+
+    private int rectArea(Rect rect) => rect.width * rect.height;
+
+
+    Mat gaussian(Mat boundedFace)
+    {
+        //Mat src = new Mat(boundedFace);
+        //Mat dst = new Mat(boundedFace);
+        // TODO do I have the order of these (kernel dimensions) correct
+        Imgproc.GaussianBlur(boundedFace, boundedFace, kernelDimensions((int) boundedFace.width(), (int) boundedFace.height()), 0);
+
+        return boundedFace;
+    }
+
+    Mat pixel(Mat boundedFace)
+    {
+        float pScale = 0.08f;
+        Size dSize = new Size(boundedFace.cols() * pScale, boundedFace.rows() * pScale);
+        Size oSize = new Size(boundedFace.cols(), boundedFace.rows());
+        Mat pixelated = new Mat(dSize, CvType.CV_32S);
+        Imgproc.resize(boundedFace, pixelated, dSize);
+        Imgproc.resize(pixelated, boundedFace, oSize);
+        return boundedFace;
+    }
+
+    void image(string type)
+    {
+        // TODO readd this code
     }
 }
 

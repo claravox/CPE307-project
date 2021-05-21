@@ -22,7 +22,6 @@ using PositionsVector = System.Collections.Generic.List<OpenCVForUnity.CoreModul
 public class FaceDetector : MonoBehaviour
 {
     // Our things
-    // TODO include image types
     public enum blurOption { gaussian, pixel, face, flower, mask };
     public blurOption BlurType;
 
@@ -901,6 +900,39 @@ public class FaceDetector : MonoBehaviour
     }
 
     private Size kernelDimensions(int width, int height) => new Size((width / 7) | 1, (height / 7) | 1);
+
+
+    public void setMode(int modeIndex)
+    {
+        switch (modeIndex)
+        {
+            case 0:
+                {
+                    BlurType = blurOption.gaussian;
+                    break;
+                }
+            case 1:
+                {
+                    BlurType = blurOption.pixel;
+                    break;
+                }
+            case 2:
+                {
+                    BlurType = blurOption.flower;
+                    break;
+                }
+            case 3:
+                {
+                    BlurType = blurOption.face;
+                    break;
+                }
+            case 4:
+                {
+                    BlurType = blurOption.mask;
+                    break;
+                }
+        }
+    }
 
     Mat gaussian(Mat boundedFace)
     {

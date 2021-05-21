@@ -148,6 +148,9 @@ public class FaceDetector : MonoBehaviour
     Parameters parameters;
     InnerParameters innerParameters;
 
+    // For image as covers
+    ImageOverlayManager imgMananger;
+
     #if UNITY_WEBGL
     IEnumerator getFilePath_Coroutine;
     #endif
@@ -155,6 +158,8 @@ public class FaceDetector : MonoBehaviour
     // Use this for initialization
     void Start ()
     {   
+        imgMananger = GameObject.Find("ImageOverlayManager").GetComponent<ImageOverlayManager>();
+        
         webCamTextureToMatHelper = gameObject.GetComponent<WebCamTextureToMatHelper> ();
 
         #if UNITY_WEBGL
@@ -866,15 +871,13 @@ public class FaceDetector : MonoBehaviour
         {
             case (blurOption.gaussian):
                 {
-                    // TODO add back
-                    //imgMananger.disableImage();
+                    imgMananger.disableImage();
                     gaussian(frame);
                     break;
                 }
             case (blurOption.pixel):
                 {
-                    // TODO add back
-                    //imgMananger.disableImage();
+                    imgMananger.disableImage();
                     pixel(frame);
                     break;
                 }
@@ -910,6 +913,7 @@ public class FaceDetector : MonoBehaviour
 
     Mat pixel(Mat boundedFace)
     {
+        // TODO is this working?
         float pScale = 0.08f;
         Size dSize = new Size(boundedFace.cols() * pScale, boundedFace.rows() * pScale);
         Size oSize = new Size(boundedFace.cols(), boundedFace.rows());
@@ -921,7 +925,12 @@ public class FaceDetector : MonoBehaviour
 
     void image(string type)
     {
-        // TODO readd this code
+        imgMananger.changeImageType(type);
+        if(imgMananger.enabled == false)
+        {
+            Debug.Log("enabling Image Overlay");
+            imgMananger.enableImage();
+        }
     }
 }
 

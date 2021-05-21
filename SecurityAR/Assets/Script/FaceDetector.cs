@@ -81,7 +81,7 @@ public class FaceDetector : MonoBehaviour
     /// <summary>
     /// The result objects.
     /// </summary>
-    List<Rect> resultObjects = new List<Rect> ();
+    public List<Rect> resultObjects = new List<Rect> ();
 
     // for Thread
     CascadeClassifier cascade4Thread;

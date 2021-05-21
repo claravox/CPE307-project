@@ -27,7 +27,7 @@ public class ImageOverlayManager : MonoBehaviour
         GameObject cameraView = GameObject.Find("CameraView");
 
         //get face count
-        faces = GameObject.Find("Quad").GetComponent<FaceDetector>().Face;
+        faces = GameObject.Find("Quad").GetComponent<FaceDetector>().resultObjects.ToArray();
 
         // Move our lists along
 

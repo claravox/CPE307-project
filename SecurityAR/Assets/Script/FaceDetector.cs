@@ -247,7 +247,7 @@ public class FaceDetector : MonoBehaviour
 
         grayMat = new Mat (webCamTextureMat.rows (), webCamTextureMat.cols (), CvType.CV_8UC1);
         cascade = new CascadeClassifier ();
-        cascade.load (lbp_cascade_filepath);
+        cascade.load (haar_cascade_filepath);
         if (cascade.empty ()) {
             Debug.LogError ("cascade file is not loaded. Please copy from “OpenCVForUnity/StreamingAssets/” to “Assets/StreamingAssets/” folder. ");
         }

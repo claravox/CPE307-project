@@ -16,7 +16,7 @@ public class ImageOverlayManager : MonoBehaviour
     List<GameObject> prevPrevImages = new List<GameObject>();
     string Imagetype;
 
-    
+
     void Start()
     {
         Imagetype = "flower";
@@ -26,7 +26,7 @@ public class ImageOverlayManager : MonoBehaviour
     void Update()
     {
         // TODO could this go in start?
-        GameObject cameraView = GameObject.Find("Quad");
+        GameObject cameraView = GameObject.Find("Canvas");
 
         //get face count
         faces = GameObject.Find("Quad").GetComponent<FaceDetector>().resultObjects.ToArray();
@@ -57,7 +57,7 @@ public class ImageOverlayManager : MonoBehaviour
 
             Vector3 facePos = new Vector3(x, y, cameraView.transform.position.z);
             GameObject aImage = GameObject.Instantiate(ImagePrefab, this.gameObject.transform);
-            aImage.GetComponent<RectTransform>().localScale = new Vector3(resScale, resScale, 1);
+            // TODO add back aImage.GetComponent<RectTransform>().localScale = new Vector3(resScale, resScale, 1);
             aImage.transform.position = facePos;
             aImage.SetActive(true);
             images.Add(aImage);

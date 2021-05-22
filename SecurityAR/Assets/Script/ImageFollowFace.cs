@@ -8,7 +8,7 @@ using Rect = OpenCVForUnity.CoreModule.Rect;
 public class ImageFollowFace : MonoBehaviour
 {
 
-    GameObject cameraView;
+    //GameObject cameraView;
     Image imageRender;
     
     public Rect faceLocation;
@@ -20,7 +20,7 @@ public class ImageFollowFace : MonoBehaviour
     {
         imageRender = this.GetComponent<Image>();
         imageRender.enabled = true;
-        cameraView = GameObject.Find("CameraView");
+        //cameraView = GameObject.Find("CameraView");
         this.enabled = true;
     }
 

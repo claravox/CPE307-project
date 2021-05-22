@@ -57,7 +57,7 @@ public class ImageOverlayManager : MonoBehaviour
 
             Vector3 facePos = new Vector3(x, y, cameraView.transform.position.z);
             GameObject aImage = GameObject.Instantiate(ImagePrefab, this.gameObject.transform);
-            // TODO add back aImage.GetComponent<RectTransform>().localScale = new Vector3(resScale, resScale, 1);
+            aImage.GetComponent<RectTransform>().localScale = new Vector3(resScale, resScale, 1);
             aImage.transform.position = facePos;
             aImage.SetActive(true);
             images.Add(aImage);

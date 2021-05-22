@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Rect = OpenCVForUnity.CoreModule.Rect;
+// For using Arrays.sort
+using System;
 
 
 public class ImageOverlayManager : MonoBehaviour
@@ -41,6 +43,10 @@ public class ImageOverlayManager : MonoBehaviour
        prevPrevImages = prevImages;
        prevImages = images;
        images = new List<GameObject>();
+
+        // Have to do this so only secondary faces are covered
+       Array.Sort(faces, (Rect r1, Rect r2) =>
+           r2.area().CompareTo(r1.area()));
 
        for (int i = 1; i < faces.Length && i < 10; i++) {
             Rect faceLocation = faces[i];

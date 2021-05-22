@@ -325,7 +325,7 @@ public class FaceDetector : MonoBehaviour
                 rectsWhereRegions = detectionResult.toArray ();
             
                 rects = rectsWhereRegions;
-                displayLive(rgbaMat, rects, new Scalar (0, 0, 255, 255));
+                //displayLive(rgbaMat, rects, new Scalar (0, 0, 255, 255));
                 for (int i = 0; i < rects.Length; i++) {
                     // TODO put decided filter here
                     Imgproc.rectangle (rgbaMat, new Point (rects [i].x, rects [i].y), new Point (rects [i].x + rects [i].width, rects [i].y + rects [i].height), new Scalar (0, 0, 255, 255), 2);
@@ -360,7 +360,7 @@ public class FaceDetector : MonoBehaviour
                 }
 
                 rects = rectsWhereRegions;
-                displayLive(rgbaMat, rects, new Scalar (0, 0, 255, 255));
+                //displayLive(rgbaMat, rects, new Scalar (0, 0, 255, 255));
                 for (int i = 0; i < rects.Length; i++) {
                     // TODO put decided filter here
                     Imgproc.rectangle (rgbaMat, new Point (rects [i].x, rects [i].y), new Point (rects [i].x + rects [i].width, rects [i].y + rects [i].height), new Scalar (0, 255, 0, 255), 2);
@@ -380,7 +380,7 @@ public class FaceDetector : MonoBehaviour
             GetObjects (resultObjects);
 
             rects = resultObjects.ToArray ();
-            //displayLive(rgbaMat, rects, new Scalar (0, 0, 255, 255));
+            displayLive(rgbaMat, rects, new Scalar (0, 0, 255, 255));
             for (int i = 0; i < rects.Length; i++) {
                 //Debug.Log ("detect faces " + rects [i]);
                 // TODO another blur option here?

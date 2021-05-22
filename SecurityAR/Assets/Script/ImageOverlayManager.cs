@@ -27,7 +27,8 @@ public class ImageOverlayManager : MonoBehaviour
 
     void Update()
     {
-        // TODO could this go in start?
+        // TODO could this go in start? 
+        // or does it have to be here as user can change screen size?
         GameObject cameraView = GameObject.Find("Canvas");
 
         //get face count

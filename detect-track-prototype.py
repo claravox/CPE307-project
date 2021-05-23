@@ -19,7 +19,6 @@ import time
 #Initialize a face cascade using the frontal face haar cascade provided with
 #the OpenCV library
 faceCascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-sideCascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_profileface.xml')
 #The deisred output width and height
 # Commenting, don't seem to be using?
 #OUTPUT_SIZE_WIDTH = 775
@@ -78,28 +77,6 @@ def detectAndTrackLargestFace():
                 #Now use the haar cascade detector to find all faces
                 #in the image
                 faces = faceCascade.detectMultiScale(gray, 1.3, 5)
-                side_faces = sideCascade.detectMultiScale(gray, 1.3, 1)
-
-                maxArea = 0
-                x = 0
-                y = 0
-                w = 0
-                h = 0
-
-                for (_x,_y,_w,_h) in side_faces:
-                    if  _w*_h > maxArea:
-                        x = int(_x)
-                        y = int(_y)
-                        w = int(_w)
-                        h = int(_h)
-                        maxArea = w*h
-
-                #If one or more faces are found, initialize the tracker
-                #on the largest face in the picture
-                if maxArea > 0:
-                    # Let's just show what the side face found
-                    cv2.rectangle(frame, (x, y), (x + w , y + h),
-                                                rectangleColor ,2)
 
 
                 #For now, we are only interested in the 'largest'

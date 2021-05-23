@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
@@ -21,6 +21,14 @@ public class FaceDetector : MonoBehaviour
     //CascadeClassifier cascade;
 
     Net classifier = null;
+
+    //image tracking
+    public Rect[] face;
+    public Sprite[] imagePrefabs;
+
+    //ui
+    public enum blurOption { gaussian, pixel, face, flower, mask };
+    public blurOption BlurType;
 
     public bool live = true;
     public int resWidth = 2550;
@@ -80,7 +88,6 @@ public class FaceDetector : MonoBehaviour
 
     void loadModel()
     {
-
         string caffePath = getStreamingAssetsFilePath(caffeModelFileName);
         string protoTxtPath = getStreamingAssetsFilePath(prototxtFileName);
 
@@ -98,11 +105,14 @@ public class FaceDetector : MonoBehaviour
     }
 
             // Start is called before the first frame update
+    // Start is called before the first frame update
+    ImageOverlayManager imgMananger;
+
     void Start()
     {
+        imgMananger = GameObject.Find("ImageOverlayManager").GetComponent<ImageOverlayManager>();
         WebCamDevice[] devices = WebCamTexture.devices;
         WebCamDevice camera;
-
 
         //No device is availble
         if (devices.Length == 0)
@@ -114,7 +124,7 @@ public class FaceDetector : MonoBehaviour
 
         float width;
         float height;
-        
+
 
         if (onMobile && devices.Length > 1)
         {
@@ -125,11 +135,11 @@ public class FaceDetector : MonoBehaviour
             camera = devices[0];
         }
 
-   
+
         width = GetComponent<RectTransform>().rect.width;
         height = GetComponent<RectTransform>().rect.height;
-        
-      
+
+
         Debug.Log("width = " + width);
         Debug.Log("height = " + height);
 
@@ -142,7 +152,6 @@ public class FaceDetector : MonoBehaviour
         loadModel();
     }
     
-
     private Size kernelDimensions(int width, int height) => new Size((width / 2) | 1, (height / 2) | 1);
 
     private int rectArea(Rect rect) => rect.width * rect.height;
@@ -150,7 +159,7 @@ public class FaceDetector : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log(string.Format("classifier: {0}", classifier));
+        //Debug.Log(string.Format("classifier: {0}", classifier));
         GetComponent<CanvasRenderer>().SetTexture(_webCamTexture);
 
         Mat frame = new Mat(_webCamTexture.height, _webCamTexture.width, CvType.CV_8UC4, new Scalar(0, 0, 0, 255));
@@ -167,18 +176,18 @@ public class FaceDetector : MonoBehaviour
             Debug.Log("No faces detected");
             return;
         }
+        //for image tracking
+        //face = maybeFaces[0];
 
-        Rect face = maybeFaces[0];
-
-        Debug.Log(string.Format("Detected Face At: ({0}, {1}) width={2} height={3}",
-            face.x, face.y, face.width, face.height));
+        //Debug.Log(string.Format("Detected Face At: ({0}, {1}) width={2} height={3}",
+        //    face.x, face.y, face.width, face.height));
         
         Array.Sort(maybeFaces, (Rect r1, Rect r2) =>
             rectArea(r2).CompareTo(rectArea(r1)));
         
         for (int i = 1; i < maybeFaces.Length; i++)
         {
-            Debug.Log("BLURRING FACE");
+            //Debug.Log("BLURRING FACE");
               Rect curFace = maybeFaces[i];
               Mat subFrame = frame.submat(
                   curFace.y,
@@ -186,12 +195,95 @@ public class FaceDetector : MonoBehaviour
                   curFace.x,
                   curFace.x + curFace.width);
 
-              blurFace(subFrame);
+            blurOptionExecute(subFrame);
         }
 
         if (live)
+            display(frame, maybeFaces, new Scalar(250, 0, 0));
+        else
+            imgMananger.disableImage();
+    }
+
+    private string checkDeviceType()
+    {
+        string m_DeviceType = null;
+
+        if (SystemInfo.deviceType == DeviceType.Desktop)
         {
-            display(frame, maybeFaces, new Scalar(0, 0, 250));
+            m_DeviceType = "Desktop";
+        }
+        if (SystemInfo.deviceType == DeviceType.Handheld)
+        {
+            m_DeviceType = "Handheld";
+        }
+        return m_DeviceType;
+    }
+
+    public void setMode(int modeIndex)
+    {
+        switch (modeIndex)
+        {
+            case 0:
+                {
+                    BlurType = blurOption.gaussian;
+                    break;
+                }
+            case 1:
+                {
+                    BlurType = blurOption.pixel;
+                    break;
+                }
+            case 2:
+                {
+                    BlurType = blurOption.flower;
+                    break;
+                }
+            case 3:
+                {
+                    BlurType = blurOption.face;
+                    break;
+                }
+            case 4:
+                {
+                    BlurType = blurOption.mask;
+                    break;
+                }
+        }
+    }
+
+    void blurOptionExecute(Mat frame)
+    {
+        switch (BlurType)
+        {
+            case (blurOption.gaussian):
+                {
+                    imgMananger.disableImage();
+                    gaussian(frame);
+                    break;
+                }
+            case (blurOption.pixel):
+                {
+                    imgMananger.disableImage();
+                    Debug.Log("Pixel needs to be implemented with openCVforUnity");
+                    
+                    //pixel(frame);
+                    break;
+                }
+            case (blurOption.flower):
+                {
+                    image("flower");
+                    break;
+                }
+            case (blurOption.mask):
+                {
+                    image("mask");
+                    break;
+                }
+            case (blurOption.face):
+                {
+                    image("face");
+                    break;
+                }
         }
     }
 
@@ -300,11 +392,13 @@ public class FaceDetector : MonoBehaviour
                              DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
     }
 
-    /*
+    /*TODO: need to be updated with openCVforUnity*/
+
     // takePhoto used for shutter button onClick event
+    /*
     public void takePhoto()
     {
-        Texture2D screenShot = (Texture2D) newTexture;
+        Texture2D screenShot = (Texture2D)newTexture;
         byte[] bytes = screenShot.EncodeToPNG();
 
         string storageRoot = getStorageRootDir();
@@ -322,15 +416,38 @@ public class FaceDetector : MonoBehaviour
         live = !live;
         Debug.Log("Live Mode is currently" + live);
     }
-    
-    Mat blurFace(Mat boundedFace)
+    Mat gaussian(Mat boundedFace)
     {
         Imgproc.GaussianBlur(boundedFace, boundedFace,
             kernelDimensions(boundedFace.width(), boundedFace.height()), 0);
         //InputArray src = new InputArray(boundedFace);
         // OutputArray dst = new OutputArray(boundedFace);
         // Cv2.GaussianBlur(src, dst, kernelDimensions(boundedFace.Width, boundedFace.Height), 0);
-
         return boundedFace;
     }
+
+
+    /*TODO: need to be updated with openCVforUnity*/
+
+    //Mat pixel(Mat boundedFace)
+    //{
+    //    float pScale = 0.08f;
+    //    Size dSize = new Size(boundedFace.Cols * pScale, boundedFace.Rows * pScale);
+    //    Size oSize = new Size(boundedFace.Cols, boundedFace.Rows);
+    //    Mat pixelated = new Mat(dSize, MatType.CV_32S);
+    //    Cv2.Resize(boundedFace, pixelated, dSize);
+    //    Cv2.Resize(pixelated, boundedFace, oSize);
+    //    return boundedFace;
+    //}
+
+    void image(string type)
+    {
+        imgMananger.changeImageType(type);
+        if(imgMananger.enabled == false)
+        {
+            Debug.Log("enabling Image Overlay");
+            imgMananger.enableImage();
+        }
+    }
+
 }

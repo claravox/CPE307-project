@@ -23,7 +23,7 @@ public class ImageOverlayManager : MonoBehaviour
     void FixedUpdate()
     {
         //get face count
-        faces = GameObject.Find("CameraView").GetComponent<FaceDetector>().face;
+        faces = new Rect[0];
         //if face count changed, change the amount of images as well
         //there is always 1 image less the faces
         if (lastFaceCount != faces.Length)

@@ -8,6 +8,7 @@ using OpenCVForUnity.DnnModule;
 using OpenCVForUnity.ImgprocModule;
 using Rect = OpenCVForUnity.CoreModule.Rect;
 using OpenCVForUnity.UnityUtils.Helper;
+using OpenCVForUnity.TrackingModule;
 
 
 [RequireComponent(typeof(WebCamTextureToMatHelper))]
@@ -17,6 +18,7 @@ public class FaceDetector : MonoBehaviour
     /// Face Locations
     /// </summary>
     private Rect[] maybeFaces;
+    private Rect[] boxes;
 
     private Net classifier = null;
 
@@ -47,20 +49,25 @@ public class FaceDetector : MonoBehaviour
             return null;
         }
         Array.Sort(maybeFaces, (Rect r1, Rect r2) => rectArea(r2).CompareTo(rectArea(r1)));
+   
         return maybeFaces;
     }
 
     private Rect[] findNewfaces(Mat frame)
     {
-        //New Mat with different Color mode
-        Mat bgaMat = new Mat(frame.rows(), frame.cols(), CvType.CV_8UC3);
-        
-        Imgproc.cvtColor(frame, bgaMat, Imgproc.COLOR_RGBA2BGR);
 
+        Mat blob;
         Size imageSize = new Size(300, 300);
 
-        Mat blob = Dnn.blobFromImage(bgaMat, 1.0, imageSize, new Scalar(104.0, 177.0, 123.0));
+       
+        Mat bgrMat = new Mat(frame.rows(), frame.cols(), CvType.CV_32F);
+        Imgproc.cvtColor(frame, bgrMat, Imgproc.COLOR_RGBA2BGR);
+        Imgproc.resize(bgrMat, bgrMat, imageSize);
+        // blob = Dnn.blobFromImage(bgrMat, 1.0, imageSize, new Scalar(104.0, 177.0, 123.0));
+        blob = Dnn.blobFromImage(bgrMat, 1.0, imageSize, new Scalar(0, 0, 0), false);
+        //New Mat with different Color mode
 
+        Debug.Log($"classifier native address: {classifier.getNativeObjAddr()}");
         classifier.setInput(blob);
 
         List<Mat> outputs = new List<Mat>();
@@ -127,6 +134,7 @@ public class FaceDetector : MonoBehaviour
 
         Debug.Log($"Caffe path: {caffePath}; protoTxtPath: {protoTxtPath}");
 
+        Debug.Log($"caffe path exists? {File.Exists(caffePath)}");
 
         classifier = Dnn.readNetFromCaffe(protoTxtPath,
             caffePath);
@@ -136,6 +144,7 @@ public class FaceDetector : MonoBehaviour
         //outBlobTypes = getOutputsTypes(classifier);
         //Debug.Log($"out blob type: {outBlobTypes[0]}");
     }
+
     private string getStreamingAssetsFilePath(string fileName)
     {
         string path = Path.Combine(Application.streamingAssetsPath, fileName);
@@ -147,7 +156,6 @@ public class FaceDetector : MonoBehaviour
 
         return path;
     }
-
 
 
     //HELPER FUNCTION
@@ -195,14 +203,12 @@ public class FaceDetector : MonoBehaviour
                 throw new Exception(string.Format("SecurityAR: Failed to fetch asset file {0}", task.webRequest.error.ToString()));
             }
 
-            var text = task.webRequest.downloadHandler.text;
-
+            //var text = task.webRequest.downloadHandler.text;
+            var data = task.webRequest.downloadHandler.data;
             string targetPath = Path.Combine(Application.persistentDataPath, newName);
-            if (!File.Exists(targetPath))
-            {
-                File.WriteAllText(targetPath, text);
-            }
-
+            
+            File.WriteAllBytes(targetPath, data);
+            
             return targetPath;
         }
     }

@@ -207,44 +207,5 @@ public class FaceDetector : MonoBehaviour
         }
     }
 
-    /*STORAGE FEATURE*/
-    private static void createDirIfNotExists(string dir)
-    {
-        if (!Directory.Exists(dir))
-        {
-            Directory.CreateDirectory(dir);
-        }
-    }
 
-    private static string getStorageRootDir()
-    {
-        return Path.Combine(Application.persistentDataPath, "screenshots");
-    }
-
-    public static string ScreenShotName(string root, int width, int height)
-    {
-        return string.Format("{0}/screen_{1}x{2}_{3}.png",
-                             root,
-                             width, height,
-                             DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
-    }
-
-    /*TODO: need to be updated with openCVforUnity*/
-
-    // takePhoto used for shutter button onClick event
-    /*
-    public void takePhoto()
-    {
-        Texture2D screenShot = (Texture2D)newTexture;
-        byte[] bytes = screenShot.EncodeToPNG();
-
-        string storageRoot = getStorageRootDir();
-        createDirIfNotExists(storageRoot);
-
-        string filename = ScreenShotName(storageRoot, resWidth, resHeight);
-
-        File.WriteAllBytes(filename, bytes);
-        Debug.Log(string.Format("SecurityAR: saved image to: {0}", filename));
-    }
-    */
 }

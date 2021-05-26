@@ -7,13 +7,12 @@ using OpenCVForUnity.UnityUtils;
 using OpenCVForUnity.UnityUtils.Helper;
 using System;
 using UnityEngine;
+using System.IO;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using Rect = OpenCVForUnity.CoreModule.Rect;
-
 
 [RequireComponent(typeof(WebCamTextureToMatHelper))]
 
@@ -84,15 +83,8 @@ public class CameraViewManager : MonoBehaviour
                         Debug.Log("BLURRING FACE");
                         Rect curFace = faceLocations[i];
                         BlurMethods.blurOptionExecute(rgbaMat, curFace, BlurType);
-                        //Mat subFrame = rgbaMat.submat(
-                        //    curFace.y,
-                        //    curFace.y + curFace.height,
-                        //    curFace.x,
-                        //    curFace.x + curFace.width);
-
                     }
                 }
-
             }
 
             Utils.fastMatToTexture2D(rgbaMat, texture);
@@ -100,8 +92,6 @@ public class CameraViewManager : MonoBehaviour
 
         }
     }
-
-
 
     private void drawRectOverFaces(Mat frame, Rect[] faces, Scalar color)
     {
@@ -226,5 +216,78 @@ public class CameraViewManager : MonoBehaviour
                 }
         }
     }
+    
+    /// <summary>
+    /// Save the texture2D to the default data path
+    /// </summary>
+    public void takePhoto()
+    {
+        string filename = null;
+        switch (SystemInfo.deviceType)
+        {
+            case DeviceType.Desktop:
+                {
+                    filename = ScreenShotNameWithPath(texture.width, texture.height);
+                    byte[] bytes;
+                    bytes = texture.EncodeToPNG();
+                    File.WriteAllBytes(filename, bytes);
+                    break;
+                }
+            case DeviceType.Handheld:
+                {
+                    /*ANDRIOD NOTE*/
+                    //Android - you must set Write Access to External (SDCard) in Player Setting
+                    filename = ScreenShotName(texture.width, texture.height);
+                    NativeToolkit.SaveImage(texture, filename, "png");
+                    break;
+                }
+        }
+        
+        Debug.Log(string.Format("SecurityAR: saved image : {0}", filename));
+    }
+
+    /// <summary>
+    /// Helper function for getting  the screen shot name
+    /// </summary>
+    /// <param name="width">width of the texture</param>
+    /// <param name="height">height of the texture</param>
+    /// <returns>screen shot name</returns>
+    public static string ScreenShotName(int width, int height)
+    {
+        return string.Format("screen_{0}x{1}_{2}",
+                             width, height,
+                             DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
+    }
+
+    /// <summary>
+    /// Helper function for getting  the screen shot name with the data path
+    /// </summary>
+    /// <param name="width">width of the texture</param>
+    /// <param name="height">height of the texture</param>
+    /// <returns>screen shot name with data path</returns>
+    public static string ScreenShotNameWithPath(int width, int height)
+    {
+        string storageRoot = getStorageRootDir();
+        createDirIfNotExists(storageRoot);
+        string fileName = ScreenShotName(width, height);
+        return string.Format("{0}/{1}.png",
+                             storageRoot,
+                             fileName);
+    }
+
+    private static void createDirIfNotExists(string dir)
+    {
+        if (!Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
+    }
+
+    private static string getStorageRootDir()
+    {
+        return Path.Combine(Application.persistentDataPath, "screenshots");
+    }
+
+
 }
 #endif

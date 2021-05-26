@@ -1599,7 +1599,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1958974210}
+      - m_Target: {fileID: 1958974215}
         m_MethodName: takePhoto
         m_Mode: 1
         m_Arguments:

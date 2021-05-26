@@ -5,6 +5,7 @@ using OpenCVForUnity.CoreModule;
 using OpenCVForUnity.ImgprocModule;
 using OpenCVForUnity.UnityUtils;
 using OpenCVForUnity.UnityUtils.Helper;
+using OpenCVForUnity.TrackingModule;
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -40,7 +41,7 @@ public class CameraViewManager : MonoBehaviour
     /// </summary>
     WebCamTextureToMatHelper webCamTextureToMatHelper;
 
-    FaceDetector faceDetector;
+    FaceDetector faceDetector;     
 
     //UI
     public enum blurOption { gaussian, pixel, face, flower, mask };
@@ -55,6 +56,12 @@ public class CameraViewManager : MonoBehaviour
     {
         //start the web Cam Texture
         webCamTextureToMatHelper = gameObject.GetComponent<WebCamTextureToMatHelper>();
+
+#if UNITY_ANDROID
+        webCamTextureToMatHelper.requestedIsFrontFacing = true;
+        //webCamTextureToMatHelper.avoidAndroidFrontCameraLowLightIssue = true;
+        //webCamTextureToMatHelper.requestedFPS = 60;
+#endif
         webCamTextureToMatHelper.Initialize();
 
         faceDetector = gameObject.GetComponent<FaceDetector>();
@@ -65,7 +72,6 @@ public class CameraViewManager : MonoBehaviour
     {
         if (webCamTextureToMatHelper.IsPlaying() && webCamTextureToMatHelper.DidUpdateThisFrame())
         {
-
             Mat rgbaMat = webCamTextureToMatHelper.GetMat();
 
             //Imgproc.putText (rgbaMat, "W:" + rgbaMat.width () + " H:" + rgbaMat.height () + " SO:" + Screen.orientation, new Point (5, rgbaMat.rows () - 10), Imgproc.FONT_HERSHEY_SIMPLEX, 1.0, new Scalar (255, 255, 255, 255), 2, Imgproc.LINE_AA, false);
@@ -74,7 +80,9 @@ public class CameraViewManager : MonoBehaviour
             //update the canvas renderer texture;
             if (live)
             {
+                
                 faceLocations = faceDetector.getFaceLocation(rgbaMat);
+                
                 if(faceLocations != null)
                 {
                     faceCount = faceLocations.Length;
@@ -92,7 +100,6 @@ public class CameraViewManager : MonoBehaviour
 
                     }
                 }
-
             }
 
             Utils.fastMatToTexture2D(rgbaMat, texture);

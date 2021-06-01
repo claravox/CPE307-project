@@ -67,11 +67,6 @@ public abstract class BlurMethods : MonoBehaviour
         Mat alphaMaskInv = new Mat();
         Core.bitwise_not(alphaMask, alphaMaskInv);
 
-        //Imgcodecs.imwrite(Application.dataPath + "/alpha.png", alphaMask);
-        //Imgcodecs.imwrite(Application.dataPath + "/alphaInv.png", alphaMaskInv);
-        //Imgcodecs.imwrite(Application.dataPath + "/scaled.png", scaledImage);
-
-
         Core.bitwise_and(boundedFace, boundedFace, alphaMaskInv);
         Core.bitwise_and(scaledImage, scaledImage, alphaMask);
         Core.add(boundedFace, scaledImage, boundedFace);

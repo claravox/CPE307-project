@@ -31,7 +31,7 @@ public class CameraViewManager : MonoBehaviour
     /// <summary>
     /// The locations of the faces in the frame
     /// </summary>
-    Rect[] faceLocations;
+    public Rect[] faceLocations;
 
     int faceCount;
     /// <summary>
@@ -109,11 +109,17 @@ public class CameraViewManager : MonoBehaviour
                 {
                     faceCount = faceLocations.Length;
                     drawRectOverFaces(rgbaMat, faceLocations, new Scalar(0, 0, 255));
-                    for (int i = 1; i < faceLocations.Length; i++)
-                    {
-                        Debug.Log("BLURRING FACE");
-                        Rect curFace = faceLocations[i];
-                        BlurMethods.blurOptionExecute(rgbaMat, curFace, BlurType);
+                    if (BlurType == face || BlurType == flower || BlurType == mask) {
+                        ImageOverlayManager.enableImage();
+                        ImageOverlayManager.changeImageType(BlurType);
+                    }
+                    else{
+                        for (int i = 1; i < faceLocations.Length; i++)
+                        {
+                            Debug.Log("BLURRING FACE");
+                            Rect curFace = faceLocations[i];
+                            BlurMethods.blurOptionExecute(rgbaMat, curFace, BlurType);
+                        }
                     }
                 }
             }

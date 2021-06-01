@@ -59,6 +59,37 @@ public class CameraViewManager : MonoBehaviour
         faceDetector = gameObject.GetComponent<FaceDetector>();
     }
 
+    /// <summary>
+    /// Raises the webcam texture to mat helper initialized event.
+    /// </summary>
+    public void OnWebCamTextureToMatHelperInitialized()
+    {
+        Debug.Log("OnWebCamTextureToMatHelperInitialized");
+
+        Mat webCamTextureMat = webCamTextureToMatHelper.GetMat();
+
+        texture = new Texture2D(webCamTextureMat.cols(), webCamTextureMat.rows(), TextureFormat.RGBA32, false);
+        Utils.fastMatToTexture2D(webCamTextureMat, texture);
+
+        gameObject.GetComponent<Renderer>().material.mainTexture = texture;
+
+        gameObject.transform.localScale = new Vector3(webCamTextureMat.cols(), webCamTextureMat.rows(), 1);
+
+        float width = webCamTextureMat.width();
+        float height = webCamTextureMat.height();
+
+        float widthScale = (float)Screen.width / width;
+        float heightScale = (float)Screen.height / height;
+        if (widthScale < heightScale)
+        {
+            Camera.main.orthographicSize = (width * (float)Screen.height / (float)Screen.width) / 2;
+        }
+        else
+        {
+            Camera.main.orthographicSize = height / 2;
+        }
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -88,7 +119,7 @@ public class CameraViewManager : MonoBehaviour
             }
 
             Utils.fastMatToTexture2D(rgbaMat, texture);
-            gameObject.GetComponent<CanvasRenderer>().SetTexture(texture);
+            //gameObject.GetComponent<CanvasRenderer>().SetTexture(texture);
 
         }
     }
@@ -227,9 +258,18 @@ public class CameraViewManager : MonoBehaviour
         {
             case DeviceType.Desktop:
                 {
+                    Camera camera = Camera.main;
+                    RenderTexture rt = new RenderTexture(texture.width, texture.height, 24);
+                    camera.targetTexture = rt;
+                    Texture2D screenShot = new Texture2D(texture.width, texture.height, TextureFormat.RGB24, false);
+                    camera.Render();
+                    RenderTexture.active = rt;
+                    screenShot.ReadPixels(new UnityEngine.Rect(0, 0, texture.width, texture.height), 0, 0);
+                    camera.targetTexture = null;
+                    RenderTexture.active = null; // JC: added to avoid errors
+                    Destroy(rt);
+                    byte[] bytes = screenShot.EncodeToPNG();
                     filename = ScreenShotNameWithPath(texture.width, texture.height);
-                    byte[] bytes;
-                    bytes = texture.EncodeToPNG();
                     File.WriteAllBytes(filename, bytes);
                     break;
                 }

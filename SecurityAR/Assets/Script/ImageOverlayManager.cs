@@ -49,7 +49,8 @@ public class ImageOverlayManager : MonoBehaviour
         Array.Sort(faces, (Rect r1, Rect r2) =>
             r2.area().CompareTo(r1.area()));
 
-        for (int i = 1; i < faces.Length && i < 10; i++) {
+        // TODO change after testing
+        for (int i = 0; i < faces.Length && i < 10; i++) {
                 Rect faceLocation = faces[i];
                 float x = cameraView.transform.position.x - cameraView.GetComponent<RectTransform>().rect.width * cameraView.GetComponent<RectTransform>().localScale.x / 2 + faceLocation.x + faceLocation.width / 2;
                 float y = cameraView.transform.position.y + cameraView.GetComponent<RectTransform>().rect.height * cameraView.GetComponent<RectTransform>().localScale.y / 2 - faceLocation.y - faceLocation.height/2;

@@ -41,9 +41,12 @@ public class CameraViewManager : MonoBehaviour
 
     FaceDetector faceDetector;
 
+    ImageOverlayManager imageOverlayManager;
+
     //UI
     public enum blurOption { gaussian, pixel, face, flower, mask };
-    public blurOption BlurType;
+    // TODO switch back to gaussian
+    public blurOption BlurType = blurOption.flower;
 
     private void OnLowMemory()
     {
@@ -55,6 +58,8 @@ public class CameraViewManager : MonoBehaviour
         //start the web Cam Texture
         webCamTextureToMatHelper = gameObject.GetComponent<WebCamTextureToMatHelper>();
         webCamTextureToMatHelper.Initialize();
+
+        imageOverlayManager = gameObject.GetComponent<ImageOverlayManager>();
 
         faceDetector = gameObject.GetComponent<FaceDetector>();
     }
@@ -109,12 +114,13 @@ public class CameraViewManager : MonoBehaviour
                 {
                     faceCount = faceLocations.Length;
                     drawRectOverFaces(rgbaMat, faceLocations, new Scalar(0, 0, 255));
-                    if (BlurType == face || BlurType == flower || BlurType == mask) {
-                        ImageOverlayManager.enableImage();
-                        ImageOverlayManager.changeImageType(BlurType);
+                    if (BlurType == blurOption.face || BlurType == blurOption.flower || BlurType == blurOption.mask) {
+                        imageOverlayManager.enableImage();
+                        imageOverlayManager.changeImageType(nameof(BlurType));
                     }
                     else{
-                        for (int i = 1; i < faceLocations.Length; i++)
+                        // TODO change back
+                        for (int i = 0; i < faceLocations.Length; i++)
                         {
                             Debug.Log("BLURRING FACE");
                             Rect curFace = faceLocations[i];

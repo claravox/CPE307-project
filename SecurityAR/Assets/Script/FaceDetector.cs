@@ -130,6 +130,8 @@ public class FaceDetector : MonoBehaviour
 
         classifier = Dnn.readNetFromCaffe(protoTxtPath,
             caffePath);
+        //classifier.setPreferableTarget(Dnn.DNN_TARGET_CUDA);
+        //classifier.setPreferableBackend(Dnn.DNN_BACKEND_CUDA);
 
         Debug.Log($"classifier == null: {classifier == null}");
 

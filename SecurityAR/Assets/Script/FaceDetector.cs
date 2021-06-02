@@ -18,7 +18,6 @@ public class FaceDetector : MonoBehaviour
     /// Face Locations
     /// </summary>
     private Rect[] maybeFaces;
-    private Rect[] boxes;
 
     private Net classifier = null;
 
@@ -67,7 +66,6 @@ public class FaceDetector : MonoBehaviour
         blob = Dnn.blobFromImage(bgrMat, 1.0, imageSize, new Scalar(0, 0, 0), false);
         //New Mat with different Color mode
 
-        Debug.Log($"classifier native address: {classifier.getNativeObjAddr()}");
         classifier.setInput(blob);
 
         List<Mat> outputs = new List<Mat>();
@@ -78,7 +76,6 @@ public class FaceDetector : MonoBehaviour
 
     private Rect[] processOutputs(List<Mat> outputs, Mat frame)
     {
-        Debug.Log($"Outputs: {outputs}");
         if (outputs.Count != 1)
         {
             throw new Exception("Unexpected output blob length");
@@ -97,7 +94,6 @@ public class FaceDetector : MonoBehaviour
 
             if (conf > ConfidenceThreshold)
             {
-                //float id = row[1];
                 float left = row[3] * frame.cols();
                 float top = row[4] * frame.rows();
                 float right = row[5] * frame.cols();
@@ -106,25 +102,10 @@ public class FaceDetector : MonoBehaviour
                 float height = bottom - top + 1;
 
                 boundingBoxes.Add(new Rect((int)left, (int)top, (int)width, (int)height));
-                //Debug.Log($"id: {id}; conf: {conf}; left:{left};top:{top};width:{width};height:{height}");
             }
         }
 
         return boundingBoxes.ToArray();
-    }
-
-    protected virtual List<string> getOutputsTypes(Net net)
-    {
-        List<string> types = new List<string>();
-
-        MatOfInt outLayers = net.getUnconnectedOutLayers();
-        for (int i = 0; i < outLayers.total(); ++i)
-        {
-            types.Add(net.getLayer(new DictValue((int)outLayers.get(i, 0)[0])).get_type());
-        }
-        outLayers.Dispose();
-
-        return types;
     }
 
     private void loadModel()
@@ -132,17 +113,8 @@ public class FaceDetector : MonoBehaviour
         string caffePath = getStreamingAssetsFilePath(caffeModelFileName);
         string protoTxtPath = getStreamingAssetsFilePath(prototxtFileName);
 
-        Debug.Log($"Caffe path: {caffePath}; protoTxtPath: {protoTxtPath}");
-
-        Debug.Log($"caffe path exists? {File.Exists(caffePath)}");
-
         classifier = Dnn.readNetFromCaffe(protoTxtPath,
             caffePath);
-
-        Debug.Log($"classifier == null: {classifier == null}");
-
-        //outBlobTypes = getOutputsTypes(classifier);
-        //Debug.Log($"out blob type: {outBlobTypes[0]}");
     }
 
     private string getStreamingAssetsFilePath(string fileName)
@@ -212,6 +184,4 @@ public class FaceDetector : MonoBehaviour
             return targetPath;
         }
     }
-
-
 }

@@ -8,6 +8,7 @@ using OpenCVForUnity.DnnModule;
 using OpenCVForUnity.UnityUtils;
 using OpenCVForUnity.ImgprocModule;
 using OpenCVForUnity.ImgcodecsModule;
+using System.IO;
 using OpenCVForUnity.UtilsModule;
 
 public abstract class BlurMethods : MonoBehaviour
@@ -55,31 +56,18 @@ public abstract class BlurMethods : MonoBehaviour
         }
 
         //scale the img
-        Mat scaledImage = new Mat();
+        Mat scaledImage = new Mat(boundedFace.rows(), boundedFace.cols(), CvType.CV_32F);
+
+        // resize image to match size of bounded face 
         Imgproc.resize(image, scaledImage, boundedFace.size());
 
-        //Extract the alpha channel of the image
-        List<Mat> imageChannels = new List<Mat>(4);
-        Core.split(scaledImage, imageChannels);
-        Mat alphaMask = imageChannels[3];
-
-        //Get the inverted alpha channel;
-        Mat alphaMaskInv = new Mat();
-        Core.bitwise_not(alphaMask, alphaMaskInv);
-
-        //Imgcodecs.imwrite(Application.dataPath + "/alpha.png", alphaMask);
-        //Imgcodecs.imwrite(Application.dataPath + "/alphaInv.png", alphaMaskInv);
-        //Imgcodecs.imwrite(Application.dataPath + "/scaled.png", scaledImage);
-
-
-        Core.bitwise_and(boundedFace, boundedFace, alphaMaskInv);
-        Core.bitwise_and(scaledImage, scaledImage, alphaMask);
+        // opencv's imread reads the image into a matrix in BGR format,
+        // but unity expects RGBA so we have to convert...
+        Imgproc.cvtColor(scaledImage, scaledImage, Imgproc.COLOR_BGR2RGBA);
         Core.add(boundedFace, scaledImage, boundedFace);
-        //Imgcodecs.imwrite(Application.dataPath + "/face.png", boundedFace);
-
+        
         return boundedFace;
     }
-
 
     public static void blurOptionExecute(Mat frame, Rect faceLocation, CameraViewManager.blurOption BlurType)
     {

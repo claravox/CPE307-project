@@ -56,11 +56,13 @@ public class CameraViewManager : MonoBehaviour
         //start the web Cam Texture
         webCamTextureToMatHelper = gameObject.GetComponent<WebCamTextureToMatHelper>();
 
-#if UNITY_ANDROID
-        webCamTextureToMatHelper.requestedIsFrontFacing = true;
-        //webCamTextureToMatHelper.avoidAndroidFrontCameraLowLightIssue = true;
-        //webCamTextureToMatHelper.requestedFPS = 60;
-#endif
+        webCamTextureToMatHelper.requestedHeight = Screen.currentResolution.height;
+        webCamTextureToMatHelper.requestedWidth = Screen.currentResolution.width;
+
+        GameObject rearFrontButton = GameObject.Find("RearFrnt");
+        if (SystemInfo.deviceType != DeviceType.Handheld)
+            rearFrontButton.SetActive(false);
+
         webCamTextureToMatHelper.Initialize();
 
         faceDetector = gameObject.GetComponent<FaceDetector>();
@@ -286,6 +288,11 @@ public class CameraViewManager : MonoBehaviour
     private static string getStorageRootDir()
     {
         return Path.Combine(Application.persistentDataPath, "screenshots");
+    }
+
+    public void changeCamFrontFacing()
+    {
+        webCamTextureToMatHelper.requestedIsFrontFacing = !webCamTextureToMatHelper.requestedIsFrontFacing;
     }
 
 

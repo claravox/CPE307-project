@@ -8,16 +8,19 @@ public class ChangeText : MonoBehaviour
 {
     TMP_Text liveText;
     bool status;
+
+    public string OriginalText, AlternateTest;
+
     private void Start()
     {
         liveText = this.GetComponent<TMP_Text>();
-        liveText.text = "ON";
+        liveText.text = OriginalText;
         status = true;  
     }
-    public void changeTextForLiveMode()
+    public void changeText()
     {
         status = !status;
-        if (status) liveText.text = "ON";
-        else liveText.text = "OFF";
+        if (status) liveText.text = OriginalText;
+        else liveText.text = AlternateTest;
     }
 }
